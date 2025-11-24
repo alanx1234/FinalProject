@@ -1,5 +1,108 @@
 // Setup canvas and projection
 const canvas = document.getElementById("globe");
+
+const spaceCanvas = document.getElementById("space-bg");
+const spaceCtx = spaceCanvas.getContext("2d");
+
+let spaceWidth = window.innerWidth;
+let spaceHeight = window.innerHeight;
+
+function resizeSpaceCanvas() {
+  spaceWidth = window.innerWidth;
+  spaceHeight = window.innerHeight;
+  spaceCanvas.width = spaceWidth;
+  spaceCanvas.height = spaceHeight;
+}
+
+let stars = [];
+let warpFactor = 0.3;
+const WARP_IDLE = 0.25;
+const WARP_CRUISE = 0.6;
+const WARP_BURST = 3.2;
+let warpTarget = WARP_IDLE;
+let starGlobalAlpha = 1;
+let starTargetAlpha = 1;
+let isInStory = false;
+let isWarping = false;
+let warpTimeout = null;
+let slowTimeout = null;
+let fadeTimeout = null;
+
+function resetStar(star) {
+  star.x = spaceWidth / 2;
+  star.y = spaceHeight / 2;
+  const angle = Math.random() * Math.PI * 2;
+  star.vx = Math.cos(angle);
+  star.vy = Math.sin(angle);
+  star.baseSize = 0.7 + Math.random() * 1.4;
+  star.size = star.baseSize;
+  star.speed = 0.6 + Math.random() * 2.1;
+  star.tw = Math.random() * Math.PI * 2;
+  star.twSpeed = 0.015 + Math.random() * 0.025;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 260; i++) {
+    const star = {};
+    resetStar(star);
+    stars.push(star);
+  }
+}
+
+function renderSpace() {
+  spaceCtx.fillStyle = "rgba(2, 6, 23, 0.9)";
+  spaceCtx.fillRect(0, 0, spaceWidth, spaceHeight);
+
+  warpFactor += (warpTarget - warpFactor) * 0.03;
+  starGlobalAlpha += (starTargetAlpha - starGlobalAlpha) * 0.03;
+
+  for (const star of stars) {
+    star.x += star.vx * star.speed * warpFactor;
+    star.y += star.vy * star.speed * warpFactor;
+    star.tw += star.twSpeed;
+
+    const twinkle = 0.7 + 0.3 * Math.sin(star.tw);
+    const alpha = starGlobalAlpha * twinkle;
+
+    if (
+      star.x < -80 ||
+      star.x > spaceWidth + 80 ||
+      star.y < -80 ||
+      star.y > spaceHeight + 80
+    ) {
+      resetStar(star);
+      continue;
+    }
+
+    const coreRadius = star.size;
+    const glowRadius = star.size * 2.2;
+
+    spaceCtx.globalAlpha = alpha;
+    spaceCtx.fillStyle = "#f9fafb";
+    spaceCtx.beginPath();
+    spaceCtx.arc(star.x, star.y, coreRadius, 0, Math.PI * 2);
+    spaceCtx.fill();
+
+    spaceCtx.globalAlpha = alpha * 0.45;
+    spaceCtx.fillStyle = "#94a3b8";
+    spaceCtx.beginPath();
+    spaceCtx.arc(star.x, star.y, glowRadius, 0, Math.PI * 2);
+    spaceCtx.fill();
+
+    spaceCtx.globalAlpha = 1;
+  }
+
+  requestAnimationFrame(renderSpace);
+}
+
+
+resizeSpaceCanvas();
+initStars();
+renderSpace();
+window.addEventListener("resize", resizeSpaceCanvas);
+
+
 const context = canvas.getContext("2d");
 const container = document.querySelector(".left-panel");
 
@@ -172,9 +275,10 @@ d3.json("data/countries.json").then(world => {
   // Load initial year (first step)
   const firstStep = document.querySelector(".step");
   if (firstStep) {
-    const initialCsv = firstStep.dataset.file;
+    const initialCsv = firstStep.dataset.globeFile;
     updateYear(initialCsv);
   }
+
 
 const scroller = scrollama();
 scroller.setup({ step: ".step" })
@@ -201,18 +305,70 @@ scroller.setup({ step: ".step" })
 const intro = document.querySelector(".intro");
 const scrolly = document.getElementById("scrolly");
 
-const transitionObserver = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) { // when intro is scrolled past
-      scrolly.classList.add("visible");  // fade in scrolly
-      intro.classList.add("slide-up");   // fade/slide out intro
-    } else {
-      scrolly.classList.remove("visible");
-      intro.classList.remove("slide-up");
-    }
-  });
-}, { threshold: 0 });
+function clearWarpTimers() {
+  if (warpTimeout) {
+    clearTimeout(warpTimeout);
+    warpTimeout = null;
+  }
+  if (slowTimeout) {
+    clearTimeout(slowTimeout);
+    slowTimeout = null;
+  }
+  if (fadeTimeout) {
+    clearTimeout(fadeTimeout);
+    fadeTimeout = null;
+  }
+}
+
+function enterStory() {
+  if (isInStory || isWarping) return;
+  isInStory = true;
+  isWarping = true;
+  clearWarpTimers();
+
+  scrolly.classList.add("visible");
+  intro.classList.add("slide-up");
+
+  starTargetAlpha = 1;
+  warpTarget = WARP_BURST;
+
+  warpTimeout = setTimeout(() => {
+    warpTarget = WARP_CRUISE;
+
+    slowTimeout = setTimeout(() => {
+      warpTarget = 0.02;
+
+      fadeTimeout = setTimeout(() => {
+        starTargetAlpha = 0;
+        isWarping = false;
+      }, 1400);
+    }, 1400);
+  }, 2200);
+}
+
+function leaveStory() {
+  isInStory = false;
+  isWarping = false;
+  clearWarpTimers();
+
+  warpTarget = WARP_IDLE;
+  starTargetAlpha = 1;
+
+  scrolly.classList.remove("visible");
+  intro.classList.remove("slide-up");
+}
+
+const transitionObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) {
+        enterStory();
+      } else {
+        leaveStory();
+      }
+    });
+  },
+  { threshold: 0.2 }
+);
 
 transitionObserver.observe(intro);
-
-
