@@ -40,7 +40,7 @@ body {
 
 .intro {
   transition: transform 1.2s ease, opacity 1.2s ease;
-  background: rgba(245, 247, 251, 0.96);
+  background: #f5f7fb;
   position: relative;
   z-index: 1;
   padding: 80px 48px 64px;
