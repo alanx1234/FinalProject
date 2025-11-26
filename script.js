@@ -31,6 +31,7 @@ let fadeTimeout = null;
 let lastTime = 0;
 let warpHuePhase = 0;
 
+
 function resetStar(star) {
   star.x = spaceWidth / 2;
   star.y = spaceHeight / 2;
@@ -183,6 +184,59 @@ let isWarping = false;
 let isZooming = false;
 let dotAlpha = 1.0;
 
+let scrollLocked = false;
+let absorbNextScroll = false;
+
+function preventScroll(e) {
+  if (!scrollLocked) return;
+  e.preventDefault();
+}
+
+function preventScrollKeys(e) {
+  if (!scrollLocked) return;
+  const keys = [
+    "ArrowUp",
+    "ArrowDown",
+    "PageUp",
+    "PageDown",
+    "Home",
+    "End",
+    " ",
+  ];
+  if (keys.includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
+function lockScroll() {
+  scrollLocked = true;
+  window.addEventListener("wheel", preventScroll, { passive: false });
+  window.addEventListener("touchmove", preventScroll, { passive: false });
+  window.addEventListener("keydown", preventScrollKeys, { passive: false });
+}
+
+function unlockScroll() {
+  scrollLocked = false;
+  absorbNextScroll = true;
+
+  window.removeEventListener("wheel", preventScroll);
+  window.removeEventListener("touchmove", preventScroll);
+  window.removeEventListener("keydown", preventScrollKeys);
+}
+window.addEventListener(
+  "wheel",
+  (e) => {
+    if (absorbNextScroll) {
+      absorbNextScroll = false;
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  },
+  { passive: false }
+);
+
+
+
 function resizeCanvas() {
   const rect = container.getBoundingClientRect();
   const width = rect.width;
@@ -241,6 +295,7 @@ function draw() {
     const r = projection.scale() - 3;
 
     plotData.forEach((d) => {
+
       const coords = projection([d.lon, d.lat]);
       if (!coords) return;
       const x = coords[0];
@@ -273,15 +328,8 @@ function draw() {
 }
 
 window.addEventListener("resize", resizeCanvas);
-
-const CO2_MIN = 0.0;
-const CO2_MID = 3.01215e-8;
-const CO2_MAX = 6.0243e-8;
-
-const colorScale = d3
-  .scaleLinear()
-  .domain([CO2_MIN, CO2_MID, CO2_MAX])
-  .range(["green", "yellow", "red"]);
+const CO2_MIN = 0;
+let colorScale = d3.scaleLinear().range(["green", "yellow", "red"]).clamp(true);
 
 function updateYear(csvFile) {
   d3.csv(csvFile).then((data) => {
@@ -290,6 +338,17 @@ function updateYear(csvFile) {
       lon: +d.lon,
       co2: +d.fco2antt,
     }));
+
+    const landValues = yearData
+      .filter((d) => d.co2 > 0)
+      .map((d) => d.co2)
+      .sort(d3.ascending);
+
+    if (landValues.length) {
+      const q90 = d3.quantile(landValues, 0.9);
+      const q99 = d3.quantile(landValues, 0.99);
+      colorScale.domain([0, q90, q99]);
+    }
 
     const binnedData = d3.rollup(
       yearData,
@@ -308,6 +367,8 @@ function updateYear(csvFile) {
     draw();
   });
 }
+
+
 
 function drawRegionChart(regionName, chartDiv, data, eventYear) {
   chartDiv.innerHTML = "";
@@ -468,7 +529,10 @@ function enterStory() {
     behavior: "auto",
   });
 
+  lockScroll();
+
   initStars();
+
   warpFactor = WARP_IDLE;
   starGlobalAlpha = 1;
   starTargetAlpha = 1;
@@ -516,6 +580,8 @@ function enterStory() {
           starTargetAlpha = 1;
           isWarping = false;
 
+          unlockScroll();
+
           fadeTimeout = setTimeout(() => {
             if (!isWarping) {
               warpTarget = 0.0;
@@ -524,7 +590,6 @@ function enterStory() {
             fadeTimeout = null;
           }, 1000);
         });
-
     }, DECEL_DURATION);
   }, WARP_DURATION);
 }
@@ -532,6 +597,8 @@ function enterStory() {
 
 function leaveStory() {
   if (isWarping) return;
+
+  unlockScroll();
 
   isInStory = false;
   clearWarpTimers();
