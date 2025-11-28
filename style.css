@@ -198,6 +198,7 @@ body {
   display: flex;              /* center the canvas inside */
   align-items: center;
   justify-content: center;
+  /* overflow: hidden;  */
 }
 
 .left-panel canvas {
@@ -208,11 +209,23 @@ body {
 
 .content-area {
   width: 50%;
-  padding: 60px;
-  background: var(--surface);
+  /* padding: 60px; */
+  background: rgba(255, 255, 255, 0.001);
   border-radius: 32px 0 0 32px;
   box-shadow: var(--shadow-soft);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease;
 }
+
+body.cinematic-mode .content-area {
+  opacity: 0;
+  transform: translateY(32px);
+  pointer-events: none;
+}
+
 
 .scroll-container .step {
   margin: 0 0 16px;
@@ -235,10 +248,72 @@ body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #1f7a8c;
+  transition:
+    background-color 260ms ease,
+    border-color 260ms ease,
+    color 260ms ease,
+    box-shadow 260ms ease;
 }
+
+/* When its block is active, emphasize the pill */
+.step-block.is-active .step {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0369a1;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.16);
+}
+
+/* Stagger chart + text so it feels like a mini “page load” */
+.step-block .chart,
+.step-block .textbox {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+
+.step-block.is-active .chart {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 80ms;
+}
+
+.step-block.is-active .textbox {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 140ms;
+}
+
 .step-block {
-  margin-bottom: 220px;
+  margin-bottom: 120px;
+  padding: 24px 24px 28px;
+  border-radius: 22px;
+
+  background: rgba(248, 250, 252, 0.85);
+  box-shadow: 0 0 0 rgba(15, 23, 42, 0);
+
+  opacity: 0.35;
+  transform: translateY(26px) scale(0.97);
+  filter: blur(0.3px);
+
+  transition:
+    opacity 340ms ease,
+    transform 340ms cubic-bezier(0.22, 0.9, 0.25, 1.08),
+    box-shadow 340ms ease,
+    background-color 340ms ease,
+    filter 340ms ease;
 }
+
+/* Active step looks like a focused “page” */
+.step-block.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+
 
 .textbox {
   margin-top: 10px;
@@ -246,13 +321,16 @@ body {
   color: var(--text-muted);
 }
 .ghost-step {
-  height: 100vh;
+  height: 140vh;
   margin-bottom: 0;
   opacity: 0;            
   pointer-events: none;
 }
 .ghost-step .step {
-    min-height: 100vh;
+    min-height: 140vh;
+}
+.step-block:not(.ghost-step):first-of-type {
+  margin-top: 60px;  /* tweak as you like */
 }
 .chart {
   height: 300px;

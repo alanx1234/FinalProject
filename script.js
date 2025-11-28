@@ -9,6 +9,7 @@ let spaceHeight = window.innerHeight;
 let scrollTimeout = null;
 let userIsScrolling = false;
 
+let hasExitedIntro = false;
 
 
 let stars = [];
@@ -521,6 +522,7 @@ function resizeCanvas() {
   draw();
 }
 
+
 function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   const inCinematic = document.body.classList.contains("cinematic-mode");
@@ -639,11 +641,11 @@ function updateYear(csvFile) {
 }
 
 const stepViews = {
-  "step-1850": { lon: 0, lat: 0 },
-  "step-1869": { lon: -20, lat: 10 },
-  "step-1930": { lon: 80, lat: 20 },
-  "step-1945": { lon: -120, lat: 30 },
-  "step-1952": { lon: -120, lat: 30 },
+  "step-1850": { lon: 18, lat: 2 },
+  "step-1908": { lon: 42, lat: 27 },
+  "step-1930": { lon: 5, lat: 50 },
+  "step-1945": { lon: 138, lat: 36 },
+  "step-1952": { lon: -0, lat: 51 },
   "step-2014": { lon: -120, lat: 30 }
 };
 
@@ -684,8 +686,8 @@ function drawRegionChart(regionName, chartDiv, data, eventYear) {
   chartDiv.innerHTML = "";
 
   const parsedData = data.map((d) => ({
-    time: +d.time,
-    date: new Date(+d.time, 0, 1),
+    time: +d.year,
+    date: new Date(+d.year, 0, 1),
     value: +d[regionName],
   }));
 
@@ -761,48 +763,67 @@ d3.json("data/countries.json").then((world) => {
   }
 
 const scroller = scrollama();
-scroller.setup({ step: ".step" }).onStepEnter(async ({ element }) => {
-  const stepType = element.dataset.stepType;
-  if (stepType === "landing") {
-    document.body.classList.add("cinematic-mode");
+
+scroller
+  .setup({
+    step: ".step",
+    offset: 0.2
+  })
+  .onStepEnter(async ({ element }) => {
+    const stepType = element.dataset.stepType;
+
+    // landing / approach behave as before
+    if (stepType === "landing") {
+      document.body.classList.add("cinematic-mode");
+      isEarthVisible = true;
+      resizeCanvas();
+      return;
+    }
+
+    if (stepType === "approach") {
+      document.body.classList.add("cinematic-mode");
+      isEarthVisible = true;
+      draw();
+      return;
+    }
+
+    // 🔹 NEW: mark the current step-block as active
+    const block = element.closest(".step-block");
+    document.querySelectorAll(".step-block").forEach(b => {
+      b.classList.remove("is-active");
+    });
+    if (block) block.classList.add("is-active");
+
+    // your existing behavior below
+    document.body.classList.remove("cinematic-mode");
     isEarthVisible = true;
-    resizeCanvas();
-    return;
-  }
-  if (stepType === "approach") {
-    document.body.classList.add("cinematic-mode");
-    isEarthVisible = true;
-    draw();
-    return;
-  }
 
-  document.body.classList.remove("cinematic-mode");
-  isEarthVisible = true;
+    warpTarget = 0;
+    warpFactor = 0;
+    starTargetAlpha = 0;
+    starGlobalAlpha = 0;
 
-  warpTarget = 0;
-  warpFactor = 0;
-  starTargetAlpha = 0;
-  starGlobalAlpha = 0;
+    const id = element.id;
+    const view = stepViews[id];
+    if (view) {
+      animateGlobeTo(view.lon, view.lat, 1600);
+    }
 
-  const id = element.id;
-  const view = stepViews[id];
-  if (view) {
-    animateGlobeTo(view.lon, view.lat, 1600);
-  }
+    const globeFile = element.dataset.globeFile;
+    const chartFile = element.dataset.chartFile;
+    const region = element.dataset.region;
+    const year = +element.dataset.year;
 
-  const globeFile = element.dataset.globeFile;
-  const chartFile = element.dataset.chartFile;
-  const region = element.dataset.region;
-  const year = +element.dataset.year;
+    if (globeFile) {
+      updateYear(globeFile);
+    }
 
-  updateYear(globeFile);
-
-  const chartData = await d3.csv(chartFile);
-  const block = element.closest(".step-block");
-  const chartDiv = block.querySelector(".chart");
-  drawRegionChart(region, chartDiv, chartData, year);
-});
-
+    if (chartFile && region) {
+      const chartData = await d3.csv(chartFile);
+      const chartDiv = block.querySelector(".chart");
+      drawRegionChart(region, chartDiv, chartData, year);
+    }
+  })
 });
 
 const intro = document.querySelector(".intro");
