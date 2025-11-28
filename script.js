@@ -641,7 +641,7 @@ function updateYear(csvFile) {
 }
 
 const stepViews = {
-  "step-1850": { lon: 18, lat: 2 },
+  "step-1880": { lon: 18, lat: 2 },
   "step-1908": { lon: 42, lat: 27 },
   "step-1930": { lon: 5, lat: 50 },
   "step-1945": { lon: 138, lat: 36 },
