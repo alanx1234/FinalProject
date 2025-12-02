@@ -649,24 +649,29 @@ function draw() {
     const maxVal = domain[domain.length - 1] || 1;
 
     plotData.forEach((d) => {
+      // 1) Cull points on the back side of the globe
+      if (!isPointOnFrontHemisphere(d.lat, d.lon)) return;
+
+      // 2) Then project + do your existing circle clip
       const coords = projection([d.lon, d.lat]);
       if (!coords) return;
+
       const x = coords[0];
       const y = coords[1];
       const dx = x - cx;
       const dy = y - cy;
+
+      // Keep your existing "inside the disc" check
       if (dx * dx + dy * dy > r * r) return;
 
       const intensity = Math.min(1, d.co2 / maxVal);
       const baseRadius = 1.4 + intensity * 1.7;
 
       const w = d.weight != null ? d.weight : 1;
-
-      // Dot transition: they "shrink" + fade during toggle
       const motionScale = 0.85 + 0.15 * dotTransition;
       const radius = baseRadius * motionScale * (0.7 + 0.3 * w);
 
-      const alpha = (0.25 + intensity * 0.75) * dotTransition * w; // fade out near region edge & during transitions
+      const alpha = (0.25 + intensity * 0.75) * dotTransition * w;
 
       const jitterX = (Math.random() - 0.5) * 1.2;
       const jitterY = (Math.random() - 0.5) * 1.2;
@@ -677,8 +682,8 @@ function draw() {
       context.globalAlpha = alpha;
       context.fill();
     });
-
     context.globalAlpha = 1;
+
 
     if (focusLon != null && focusLat != null && !inCinematic) {
       const focusCoords = projection([focusLon, focusLat]);
@@ -978,6 +983,27 @@ function animateDotTransition(onMidpoint) {
   }
 
   requestAnimationFrame(frame);
+}
+function isPointOnFrontHemisphere(latDeg, lonDeg) {
+  // d3-geo convention:
+  // projection.rotate() = [lambda0, phi0, gamma]
+  // Visible center on the globe is actually at (-lambda0, -phi0).
+  const [lambda0, phi0] = projection.rotate();
+
+  // Actual center lat/lon in radians
+  const λc = (-lambda0 * Math.PI) / 180;
+  const φc = (-phi0 * Math.PI) / 180;
+
+  // Point we’re testing
+  const λ = (lonDeg * Math.PI) / 180;
+  const φ = (latDeg * Math.PI) / 180;
+
+  // cos(c) for angular distance between (lat,lon) and the current center
+  // > 0  → front hemisphere relative to that center
+  const cosc =
+    Math.sin(φc) * Math.sin(φ) + Math.cos(φc) * Math.cos(φ) * Math.cos(λ - λc);
+
+  return cosc > 0;
 }
 
 
