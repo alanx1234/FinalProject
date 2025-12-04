@@ -51,8 +51,24 @@
 
 <section id="scrolly">
   <div class="left-panel">
-      <canvas id="globe"></canvas>
+  <canvas id="globe"></canvas>
+
+  <!-- CO₂ color legend -->
+  <div id="globe-legend" class="globe-legend">
+    <div class="legend-header">
+      <span class="legend-title">CO₂ emissions</span>
+      <span class="legend-subtitle">relative intensity</span>
+    </div>
+
+    <div class="legend-bar"></div>
+
+    <div class="legend-ticks">
+      <span>80th Percentile</span>
+      <span>95th Percentile</span>
+    </div>
   </div>
+</div>
+
 
     <div id="intro-cards">
       <div id="race-panel-left" class="intro-card intro-card-left">
@@ -217,32 +233,50 @@
       </div>
 
       <div class="conclusion-controls">
-        <p class="outro-body">
-          Explore the globe yourself. Drag to rotate and scrub through the
-          years to see how emissions change.
-        </p>
 
-        <label class="conclusion-year-label">
-          Year <span id="conclusion-year-label">2014</span>
-        </label>
+  <!-- Legend goes here -->
+  <div class="conclusion-legend">
+    <div class="legend-header">
+      <span class="legend-title">CO₂ emissions</span>
+      <span class="legend-subtitle">relative intensity</span>
+    </div>
 
-        <input
-          type="range"
-          id="conclusion-year-slider"
-          min="0"
-          max="6"
-          step="1"
-        />
+    <div class="legend-bar conclusion-legend-bar"></div>
 
-        <div class="conclusion-year-ticks">
-          <span>1880</span>
-          <span>1908</span>
-          <span>1930</span>
-          <span>1945</span>
-          <span>1952</span>
-          <span>1955</span>
-          <span>2014</span>
-        </div>
+    <div class="legend-ticks">
+      <span>80th Percentile</span>
+      <span>95th Percentile</span>
+    </div>
+  </div>
+
+  <p class="outro-body">
+    Explore the globe yourself. Drag to rotate and scrub through the
+    years to see how emissions change.
+  </p>
+
+  <label class="conclusion-year-label">
+    Year <span id="conclusion-year-label">2014</span>
+  </label>
+
+  <input
+    type="range"
+    id="conclusion-year-slider"
+    min="0"
+    max="6"
+    step="1"
+  />
+
+  <div class="conclusion-year-ticks">
+    <span>1880</span>
+    <span>1908</span>
+    <span>1930</span>
+    <span>1945</span>
+    <span>1952</span>
+    <span>1955</span>
+    <span>2014</span>
+  </div>
+</div>
+
       </div>
     </div>
 

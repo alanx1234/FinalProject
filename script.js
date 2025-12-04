@@ -1278,7 +1278,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYear) {
     value: +d[regionName],
   }));
 
-  const margin = { top: 20, right: 30, bottom: 30, left: 50 };
+  const margin = { top: 24, right: 30, bottom: 40, left: 70 };
   const width = chartDiv.clientWidth - margin.left - margin.right;
   const height = chartDiv.clientHeight - margin.top - margin.bottom;
 
@@ -1304,7 +1304,25 @@ function drawRegionChart(regionName, chartDiv, data, eventYear) {
   const xAxis = d3.axisBottom(x);
 
   svg.append("g").call(yAxis);
+  svg
+  .append("text")
+  .attr("class", "axis-label")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -height / 2)
+  .attr("y", -margin.left + 16)  // tweak 16 if it’s too close/far
+  .attr("text-anchor", "middle")
+  .attr("fill", "#0f172a")
+  .text("Carbon Emissions in Megatonnes");
   svg.append("g").attr("transform", `translate(0,${height})`).call(xAxis);
+  svg
+  .append("text")
+  .attr("class", "axis-label")
+  .attr("x", width / 2)
+  .attr("y", height + margin.bottom - 6)
+  .attr("text-anchor", "middle")
+  .attr("fill", "#0f172a")
+  .text("Year");
+
 
   const line = d3
     .line()

@@ -320,6 +320,110 @@ body.cinematic-mode .content-area {
   transform: translateY(-1px);
 }
 
+.globe-legend {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 15;
+
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.7);
+
+  font-family: var(--font-secondary);
+  font-size: 0.72rem;
+  color: #e5e7eb;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  backdrop-filter: blur(8px);
+}
+
+.legend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.legend-title {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.legend-subtitle {
+  font-size: 0.68rem;
+  color: #9ca3af;
+}
+
+.legend-bar {
+  margin-top: 4px;
+  height: 6px;
+  border-radius: 999px;
+  background-image: linear-gradient(
+    to right,
+    #020617,
+    #38bdf8,
+    #f97316
+  ); /* same as colorScale range */
+}
+
+.legend-ticks {
+  margin-top: 2px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #9ca3af;
+}
+
+.conclusion-legend {
+  margin-bottom: 1rem;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+
+  font-family: var(--font-secondary);
+  font-size: 0.72rem;
+  color: #0f172a;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Match the conclusionColorScale range: ["#020b1f", "#38bdf8", "#f97316"] */
+.conclusion-legend-bar {
+  background-image: linear-gradient(
+    to right,
+    #020b1f,
+    #38bdf8,
+    #f97316
+  );
+}
+
+/* Slightly darker text on light background */
+.conclusion-legend .legend-subtitle {
+  color: #6b7280;
+}
+
+.conclusion-legend .legend-ticks {
+  color: #6b7280;
+}
+
+/* Hide legend during hyperspace cinematic intro if you want */
+body.cinematic-mode .globe-legend {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+
 
 .textbox {
   margin-top: 10px;
@@ -395,8 +499,10 @@ body.cinematic-mode .content-area {
   justify-content: center;
 }
 
-
-
+.axis-label {
+  font-size: 14px; /* or 10px if you want really small */
+  fill: #0f172a;
+}
 
 .intro-meta-left {
   display: flex;
