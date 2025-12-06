@@ -1182,12 +1182,6 @@ body.cinematic-mode .year-toggle {
 
 
 
-.np-body {
-  text-align: justify;
-  text-justify: inter-word;
-  hyphens: auto; /* Adds hyphens to prevent weird spacing */
-}
-
 
 
 .np-masthead-title {
@@ -1284,7 +1278,6 @@ body.cinematic-mode .year-toggle {
   color: #6b7280;
   font-style: italic;
 }
-
 .np-body {
   font-size: 0.9rem;
   line-height: 1.8;
@@ -1292,7 +1285,16 @@ body.cinematic-mode .year-toggle {
 
   column-count: 2;
   column-gap: 36px;
+
+  /* add these */
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  word-break: normal;
+  text-wrap: pretty; /* safe nice-to-have */
 }
+
 
 /* Small screens → fall back to single column */
 @media (max-width: 900px) {
