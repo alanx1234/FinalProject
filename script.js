@@ -463,7 +463,7 @@ function initBarChartRace() {
           renderYear(year, raceYearDataByYear.get(year));
           yearLabel.text(year);
         }, STEP_INTERVAL);
-      }, 150);
+      }, 0);
     }
 
     if (playButton) {
@@ -1695,6 +1695,7 @@ d3.json("data/countries.json").then((world) => {
     if (firstSheet) {
       firstSheet.classList.add("page-current");
       lastStepBlock = firstBlock;
+      hasShownFirstPage = true;
     }
   }
   

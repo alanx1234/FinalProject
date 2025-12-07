@@ -48,6 +48,8 @@ body {
   min-height: 70vh;     
   max-height: 90vh;
   overflow-y: auto;
+  min-height: min(70vh, 540px);
+  max-height: min(80vh, 640px);
 
   /* 3. Visuals & Spacing */
   background: #f5f7fb;
@@ -64,7 +66,7 @@ body {
   justify-content: center;
   
   /* Restored Font Size */
-  font-size: 1.3rem; 
+  font-size: 1.05rem; 
   line-height: 1.6;
 
   transition: 
@@ -78,7 +80,7 @@ body {
   max-width: 60rem;
   
   /* Kept the nice readability line-height you asked for */
-  line-height: 1.8; 
+  line-height: 1.75; 
   
   /* Reduced bottom margin to pull the "Hyperspace" line up */
   margin-top: 0.5rem;
@@ -202,7 +204,7 @@ body.scroll-locked {
 .intro h1 {
   font-family: var(--font-primary);
   font-weight: 700;
-  font-size: 2.7rem;
+  font-size: 2.1 rem;
   line-height: 1.18;
   padding-bottom: 0.9rem;
   margin-bottom: 2.4rem;
@@ -861,7 +863,7 @@ body.race-expanded #race-panel-inner {
   }
   
   .intro p {
-    font-size: 0.95rem; 
+    font-size: 0.9rem; 
   }
 
   .intro-meta {
