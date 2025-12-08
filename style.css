@@ -598,11 +598,37 @@ body.race-lift #race-panel-left {
   pointer-events: auto;
 }
 @media (min-width: 900px) and (max-width: 1280px) {
+  /* Make the overlay a bit tighter on smaller laptops */
+  #intro-cards {
+    padding: 2rem 1.5rem;
+    gap: clamp(1rem, 3vw, 2.25rem);
+  }
+
+  /* Slightly narrower, more shrink-friendly cards */
   .intro-card {
+    flex: 0 1 clamp(220px, 22vw, 310px);
     font-size: 0.85rem;
-    padding: 1.1rem 1.4rem;
+    padding: 1.05rem 1.35rem;
+  }
+
+  .intro-card h2,
+  .intro-card h3 {
+    font-size: 1.1rem;
   }
 }
+@media (min-width: 900px) and (max-width: 1280px) {
+  /* Give the globe a bit less width so it doesn’t crowd the cards */
+  .left-panel {
+    width: 50%;
+  }
+
+  .content-area {
+    width: 45%;
+    padding: 32px 28px 70px 12px;
+  }
+}
+
+
 .intro-card h2,
 .intro-card h3 {
   font-family: "Playfair Display", serif;
@@ -926,12 +952,6 @@ body.race-expanded #race-panel-inner {
   position: relative;
   z-index: 2;                 /* above background canvas */
   padding: 20px 0 50px;
-  background: linear-gradient(
-    to bottom,
-    rgba(15, 23, 42, 0) 0%,
-    rgba(15, 23, 42, 0.9) 35%,
-    rgba(15, 23, 42, 1) 100%
-  );
   display: flex;
   justify-content: center;
 }
@@ -949,7 +969,20 @@ body.race-expanded #race-panel-inner {
   box-shadow: 0 26px 60px rgba(15, 23, 42, 0.6);
   font-family: var(--font-secondary);
   color: #0f172a;
+
+  /* start slightly lower + transparent; fade up when we add .is-visible */
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 480ms ease-out,
+    transform 480ms ease-out;
 }
+
+.outro-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 .outro-title {
   font-family: var(--font-primary);
@@ -975,15 +1008,16 @@ body.race-expanded #race-panel-inner {
   font-size: 0.98rem;
   line-height: 1.8;
   color: var(--text-muted);
-  text-indent: 3em;
 }
 
 .conclusion-cta {
-  margin: 32px auto 0;
-  padding-bottom: 40px;
-  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 0;
+  margin-bottom: 2rem; /* Adds breathing room between Button and "Looking Ahead" */
+  padding-bottom: 0;
 }
-
 .conclusion-cta .intro-btn {
   margin-top: 0;
 }
@@ -1001,7 +1035,8 @@ body.race-expanded #race-panel-inner {
 }
 
 .conclusion-visual {
-  margin-top: 2.4rem;
+  margin-top: 2.5rem;       /* Space away from the text */
+  padding-top: 2.5rem;
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
   gap: 2rem;
@@ -1025,7 +1060,38 @@ body.race-expanded #race-panel-inner {
   font-size: 0.9rem;
   color: var(--text-muted);
 }
+.outro-statement {
+  line-height: 1.4;
+  color: #0f172a;                   /* Darker text */
+  
+  margin-top: 2rem;
+  padding-left: 1.5rem;             /* Space text away from the border */
+  border-left: 4px solid var(--accent-soft); /* The Teal accent line */
+  
+  font-style: italic;               
+  position: relative;
+  border-left: none;
+}
+.outro-statement::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;             /* Line thickness */
+  height: 0%;             /* START AT 0% HEIGHT */
+  background: var(--accent-soft);
+  
+  /* Animate height to 100% */
+  animation: growBorder 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  
+  /* Wait 800ms so the card finishes fading in first */
+  animation-delay: 0.8s; 
+}
 
+@keyframes growBorder {
+  0% { height: 0%; }
+  100% { height: 100%; }
+}
 .conclusion-year-label {
   display: block;
   margin: 1.2rem 0 0.4rem;
@@ -1790,4 +1856,135 @@ body.cinematic-mode .timeline-back-btn {
   display: flex;
   justify-content: center;
   margin-bottom: 0.1rem; /* space between button and title */
+}
+
+
+body.intro-mode .left-panel {
+  width: 42%;
+  height: 85vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.intro-mode #globe {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+body.intro-mode .content-area {
+  display: none;  /* hide timeline pages while in intro */
+}
+
+body.intro-mode #intro-cards {
+  display: flex; /* ensure intro UI is visible */
+}
+
+@media (max-height: 880px) {
+  body.intro-mode .left-panel {
+    height: 70vh;
+  }
+}
+
+@media (max-height: 750px) {
+  body.intro-mode .left-panel {
+    height: 60vh;
+  }
+}
+
+/* --- CUSTOM SLIDER STYLING --- */
+
+/* Remove default appearance */
+#conclusion-year-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0; /* Light gray track */
+  border-radius: 999px;
+  outline: none;
+  margin: 2rem 0 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+/* Chrome/Safari/Edge Thumb */
+#conclusion-year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0ea5e9; /* Your brand Teal/Blue */
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4);
+  transform: scale(1);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Firefox Thumb */
+#conclusion-year-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4);
+  transition: transform 0.2s ease;
+}
+
+/* Hover Effect on Thumb */
+#conclusion-year-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+  background: #38bdf8;
+}
+
+#conclusion-year-slider:hover::-moz-range-thumb {
+  transform: scale(1.25);
+  background: #38bdf8;
+}
+
+/* Ticks styling adjustments */
+.conclusion-year-ticks {
+  font-family: var(--font-secondary);
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 0;
+}
+
+.conclusion-instructions {
+  margin-top: 1.5rem;      /* Give it space from the timeline ticks */
+  padding-top: 1rem;       /* Internal spacing */
+  border-top: 1px solid #e2e8f0; /* A subtle separator line */
+  
+  font-family: var(--font-secondary);
+  font-size: 0.8rem;       /* Smaller than body text */
+  color: var(--text-muted);
+  font-style: italic;      /* Makes it feel like a hint */
+  text-align: center;      /* Center it within the panel */
+}
+
+.outro-body:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-primary); /* Playfair Display */
+  font-size: 3.5rem;
+  line-height: 0.85;
+  font-weight: 700;
+  color: var(--accent-main);        /* Uses your Teal color */
+  margin-right: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+::selection {
+  background: var(--accent-soft); /* Your Teal */
+  color: #ffffff;
+  text-shadow: none;
+}
+
+/* For Firefox compatibility */
+::-moz-selection {
+  background: var(--accent-soft);
+  color: #ffffff;
+  text-shadow: none;
 }

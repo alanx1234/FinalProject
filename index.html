@@ -115,18 +115,13 @@
   <div id="intro-panel-right" class="intro-card intro-card-right">
     <h3>A World in the Dark</h3>
     <p class="intro-card-body">
-      The era of emissions has only just begun. The map remains mostly dark, except for a few industrial pioneers. These are the early sparks of a trend that will define the coming centuries.
+      The era of emissions has only just begun. Many of the biggest emitters are already in Europe, North America, and the regions they rely on. These are the early sparks of a trend that will define the coming centuries.
     </p>
   </div>
-
-  <!-- ✅ proceed button now shares the same overlay -->
   <button id="proceed-btn" class="intro-btn">
     INITIATE TIMELINE
   </button>
 </div>
-
-
-  <!-- You can put steps ANYWHERE below (center, right, stacked, etc.) -->
   <div class="content-area">
     <button id="back-to-race-btn" class="primary-btn timeline-back-btn">
       Back to Global Race
@@ -196,24 +191,6 @@
         </footer>
       </div>
     </div>
-  <!-- 
-    <div class="step-block">
-        <div class="step" id="step-1880" data-globe-file="data/1880_co.csv" data-globe-file-after="data/1880_co_after.csv" data-chart-file="data/regions_co2.csv" data-region="Africa" data-year = "1880">Year 1880</div>
-        <div class="chart" id="chart-1880"></div>
-        <div class="textbox">
-            <p>Global powers have taken advantage of Africa’s resources for centuries.
-            During the late 19th century, the Industrial Revolution fueled global demand 
-            for diamonds, rubber, and other minerals, driving intensive mining and plantation 
-            economies. Much of this activity relied on clearing rainforests, which not only 
-            released carbon from land use and farming, but also destroyed a major carbon sink.
-            In the chart, you can see that Africa’s recorded carbon emissions rise more slowly 
-            than other regions that profitted from its resources such as the United States and 
-            Western Europe, reflecting limited local industrialization. It’s only in the 
-            post–World War II period, as economies begin to develop and energy use grows, that 
-            Africa’s emissions start to climb more sharply.</p>
-        </div>
-    </div> 
-  -->
   <div class="step-block newspaper-page">
     <div class="newspaper-sheet">
       <!-- Masthead -->
@@ -503,11 +480,10 @@
 <section id = "conclusion" class = "outro hidden-outro">
   <div class = "outro-card">
     <div class="conclusion-cta">
-      <button id="back-to-timeline-btn" class="primary-btn">
+      <button id="back-to-timeline-btn" class="primary-btn glass-btn">
          Back to timeline
       </button>
     </div>
-
     <span class = "intro-label">Looking ahead</span>
       <h2 class = "outro-title">
         What can we learn from the past to help with our future
@@ -517,11 +493,14 @@
         to proliferate. Conflict-affected regions are less likely to participate in international processes and projects 
         to address climate issues due to a weakened governance – often in spite of their own vulnerability to it.
       </p>
-      <p class = "outro-body">
+      <p class="outro-body">
         How do we address the continuation of this imbalance where historical polluters are the ones that dictate terms and 
         the exploited are left to adapt or perish. Do the debts owed from colonial exploitation and imperialism commensurate 
-        to the loss (potentially permanent) experienced by the opposition. Breaking this cycle demands confronting history; 
-        in which the climate crisis has been manufactured by powerful empires’ greed, neglect, and ego.
+        to the loss (potentially permanent) experienced by the opposition.
+      </p>
+
+      <p class="outro-statement">
+        Breaking this cycle demands confronting history; in which the climate crisis has been manufactured by powerful empires’ greed, neglect, and ego.
       </p>
 
     <div class="conclusion-visual">
@@ -545,12 +524,6 @@
       <span>95th Percentile</span>
     </div>
   </div>
-
-  <p class="outro-body">
-    Explore the globe yourself. Drag to rotate and scrub through the
-    years to see how emissions change.
-  </p>
-
   <label class="conclusion-year-label">
     Year <span id="conclusion-year-label">2014</span>
   </label>
@@ -569,7 +542,9 @@
   <span>2000</span>
   <span>2014</span>
 </div>
-
+<p class="conclusion-instructions">
+    Explore the globe. Drag to rotate and scrub through the years.
+  </p>
 </div>
       </div>
     </div>

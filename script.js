@@ -11,6 +11,7 @@ let isStoryActive = false;
 let hasExitedIntro = false;
 
 let stars = [];
+let starsPaused = false;
 let warpFactor = 0.25;
 const WARP_IDLE = 0.25;
 const WARP_CRUISE = 0.6;
@@ -41,6 +42,7 @@ let isWarping = false;
 let isZooming = false;
 let dotAlpha = 1.0;
 let starsInitialized = false;
+let isOutroWarp = false;
 
 let currentYearMode = "event"; // "event" or "after"
 let currentStepElement = null; 
@@ -104,7 +106,7 @@ function endMainGlobeDrag() {
 }
 
 
-const DEV_MODE = false;
+const DEV_MODE = true;
 
 // === Historical events per region (for annotations) ===
 const REGION_EVENTS = {
@@ -125,6 +127,25 @@ const REGION_EVENTS = {
   "Vietnam": [
     { year: 1955, label: "Vietnam War" }
   ]
+};
+
+const BENEFICIARY_REGIONS_BY_STEP = {
+  "step-1880": [
+    { label: "United States", lat: 39, lon: -98 },
+    { label: "Western Europe", lat: 50, lon: 10 },
+  ],
+  "step-1908": [
+    { label: "United Kingdom", lat: 54, lon: -2 },
+    { label: "United States", lat: 39, lon: -98 },
+  ],
+  "step-1945": [{ label: "United States", lat: 39, lon: -98 }],
+  "step-1952": [
+    // just the UK halo as the exploited/beneficiary region, no extra labels
+  ],
+  "step-1955": [
+    { label: "United States", lat: 39, lon: -98 },
+    { label: "France", lat: 46, lon: 2 },
+  ],
 };
 
 
@@ -163,6 +184,14 @@ function initStars() {
 }
 
 function renderSpace(timestamp) {
+
+  if (starsPaused) {
+    lastTime = timestamp; // avoid a huge delta when we resume
+    requestAnimationFrame(renderSpace);
+    return;
+  }
+
+
   if (!lastTime) lastTime = timestamp;
   const deltaTime = (timestamp - lastTime) / 16.66;
   lastTime = timestamp;
@@ -239,9 +268,19 @@ spaceCtx.fillRect(0, 0, spaceWidth, spaceHeight);
       const tailX = star.x - star.vx * trailLength;
       const tailY = star.y - star.vy * trailLength;
 
-      const baseHue = 220 + 80 * Math.sin(warpHuePhase * 0.5);
+      // Intro warp = cool blue, outro warp = warmer magenta/pink
+      let baseHue;
+      if (isOutroWarp) {
+        // reverse warp → more cosmic purple / magenta
+        baseHue = 295 + 40 * Math.sin(warpHuePhase * 0.6);
+      } else {
+        // original intro warp look
+        baseHue = 220 + 80 * Math.sin(warpHuePhase * 0.5);
+      }
+
       const hue = (baseHue + star.hueOffset + 360) % 360;
       const lightness = 55 + Math.min(warpIntensity, 5) * 7;
+
 
       spaceCtx.globalAlpha = starGlobalAlpha;
       spaceCtx.lineCap = "round";
@@ -867,7 +906,73 @@ function draw() {
             context.fillText(activeRegionLabel, labelX, labelY);
           }
 
-          context.restore();
+                    context.restore();
+
+                    // --- Beneficiary markers: same pointer-style labels, no halo ---
+                    if (currentStepElement && !inCinematic) {
+                      const stepId = currentStepElement.id;
+                      const beneficiaries = BENEFICIARY_REGIONS_BY_STEP[stepId];
+
+                      if (beneficiaries && beneficiaries.length) {
+                        beneficiaries.forEach((b) => {
+                          // Only draw if the point is on the visible hemisphere
+                          if (!isPointOnFrontHemisphere(b.lat, b.lon)) return;
+
+                          const coords = projection([b.lon, b.lat]);
+                          if (!coords) return;
+
+                          const bx = coords[0];
+                          const by = coords[1];
+
+                          // Make sure it's on the disc, not off the edge
+                          const dx = bx - cx;
+                          const dy = by - cy;
+                          if (dx * dx + dy * dy > r * r) return;
+
+                          context.save();
+                          context.font =
+                            "500 13px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+                          context.textAlign = "center";
+                          context.textBaseline = "middle";
+                          context.shadowColor = "rgba(15, 23, 42, 0.85)";
+                          context.shadowBlur = 5;
+                          context.fillStyle = "#e5e7eb";
+
+                          // Pointer math: same idea as the main event label
+                          const vx = bx - cx;
+                          const vy = by - cy;
+                          const dist = Math.sqrt(vx * vx + vy * vy);
+
+                          const offset = r * 0.22; // same as activeRegionLabel
+
+                          let labelX, labelY;
+                          if (dist < r * 0.05) {
+                            // If close to center, shove label to the right
+                            labelX = bx + offset;
+                            labelY = by;
+                          } else {
+                            const ux = vx / (dist || 1);
+                            const uy = vy / (dist || 1);
+                            labelX = bx + ux * offset;
+                            labelY = by + uy * offset;
+                          }
+
+                          // leader line
+                          context.beginPath();
+                          context.moveTo(bx, by);
+                          context.lineTo(labelX, labelY);
+                          context.strokeStyle = "rgba(148, 163, 184, 0.75)";
+                          context.lineWidth = 0.7;
+                          context.stroke();
+
+                          // text
+                          context.fillText(b.label, labelX, labelY);
+
+                          context.restore();
+                        });
+                      }
+                    }
+
         }
       }
     }
@@ -2188,6 +2293,87 @@ function leaveStory() {
   draw();
 }
 
+function playOutroWarpToConclusion(onComplete) {
+  // If we're already warping, just bail out and go straight to conclusion
+  if (isWarping) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  // Flag this as the outro warp so streak colors change
+  isOutroWarp = true;
+
+  // We are still "in the story" during this warp
+  isWarping = true;
+  isStoryActive = false;
+
+  // Put us into cinematic mode so the timeline UI fades away
+  document.body.classList.add("cinematic-mode");
+
+  // Hide the Earth during the warp so it feels like pure hyperspace
+  isEarthVisible = false;
+  draw();
+
+  // Make sure stars are ready
+  if (!starsInitialized) {
+    initStars();
+    starsInitialized = true;
+  }
+
+  // Start from black / no stars → then ramp into warp streaks
+  warpFactor = 0.0;
+  warpTarget = WARP_BURST; // big streaks, same constant as intro warp
+  starGlobalAlpha = 0.0;
+  starTargetAlpha = 1.0; // fade stars in during the warp
+
+  const OUTRO_BURST_DURATION = 900; // big-streak phase
+  const OUTRO_SETTLE_DURATION = 700; // glide into calm stars
+
+  // Phase 1: high warp streaks
+  setTimeout(() => {
+    // Phase 2: glide back down to the idle "hovering stars" state
+    warpTarget = WARP_IDLE; // ~0.25
+    starTargetAlpha = 1.0; // keep stars visible
+
+    setTimeout(() => {
+      // Outro warp finished
+      isWarping = false;
+      isInStory = false;
+      isStoryActive = false;
+
+      warpTarget = WARP_IDLE;
+      starTargetAlpha = 1.0;
+      isOutroWarp = false; // <-- turn off special tint
+
+      document.body.classList.remove("cinematic-mode");
+
+      // Hand off to conclusion screen logic
+      if (onComplete) onComplete();
+
+      // Gentle re-affirm of visible stars after layout settles
+      setTimeout(() => {
+        starTargetAlpha = 1.0;
+      }, 350);
+    }, OUTRO_SETTLE_DURATION);
+  }, OUTRO_BURST_DURATION);
+}
+
+function cleanupStarsForTimeline() {
+  // We are going back into the STORY (timeline) state
+  isInStory = true;
+  isStoryActive = true;
+  isWarping = false;
+
+  // No warp motion, no visible stars
+  warpTarget = 0;
+  warpFactor = 0;
+  starTargetAlpha = 0;
+  starGlobalAlpha = 0;
+
+  isEarthVisible = true;
+  draw(); // one clean frame of dark, starless background
+}
+
 
 const beginBtn = document.getElementById("begin-btn");
 if (beginBtn) {
@@ -2287,9 +2473,8 @@ const conclusionSection = document.getElementById("conclusion");
 function setupConclusionButton() {
   if (!conclusionBtn || !conclusionSection) return;
 
-  conclusionBtn.addEventListener("click", () => {
-
-    // hide year toggle
+  function showConclusionScreen() {
+    // 1) Hide the Event / +10 Years toggle in conclusion
     if (yearToggleEl) {
       yearToggleEl.classList.remove("visible");
       currentYearMode = "event";
@@ -2298,8 +2483,19 @@ function setupConclusionButton() {
       });
     }
 
-    // reveal the conclusion section
+    // 2) Reveal the conclusion section
     conclusionSection.classList.remove("hidden-outro");
+
+    // Fade the card in instead of popping it
+    const outroCard = conclusionSection.querySelector(".outro-card");
+    if (outroCard) {
+      // ensure we start from the "hidden" state
+      outroCard.classList.remove("is-visible");
+      // wait one frame so display:none → block has applied
+      requestAnimationFrame(() => {
+        outroCard.classList.add("is-visible");
+      });
+    }
 
     // IMPORTANT: now that countries is guaranteed loaded,
     // the globe can safely initialize
@@ -2314,7 +2510,7 @@ function setupConclusionButton() {
       });
     }
 
-    // hide timeline and scroll to conclusion
+    // 3) Hide timeline and scroll to conclusion
     const scrollyEl = document.getElementById("scrolly");
     if (scrollyEl) scrollyEl.style.display = "none";
     document.body.classList.remove("cinematic-mode");
@@ -2323,8 +2519,14 @@ function setupConclusionButton() {
       behavior: "smooth",
       block: "start",
     });
+  }
+
+  // Use the reverse-warp outro before showing the conclusion
+  conclusionBtn.addEventListener("click", () => {
+    playOutroWarpToConclusion(showConclusionScreen);
   });
 }
+
 
 if (!DEV_MODE) {
   lockScroll();
@@ -2400,7 +2602,7 @@ function applyConclusionData(rows) {
   }
 
   // 4) IDENTICAL binning to timeline globe
-  const BIN_SIZE = 1;
+  const BIN_SIZE = 1.5;
   const binned = d3.rollup(
     yearData,
     v => ({
@@ -2436,35 +2638,44 @@ let conclusionFileCache = {};
 function loadConclusionYear(year) {
   const file = `data/${year}_co.csv`;
 
-  // update label
+  // Update label immediately
   const labelEl = document.getElementById("conclusion-year-label");
   if (labelEl) labelEl.textContent = year;
 
-  // If cached, skip reload
+  // 1. If Cached: Yield briefly, then draw
   if (conclusionFileCache[file]) {
-    applyConclusionData(conclusionFileCache[file]);
+    // setTimeout(..., 0) pushes the heavy math to the END of the event loop,
+    // guaranteeing the slider has physically moved on screen first.
+    setTimeout(() => {
+      applyConclusionData(conclusionFileCache[file]);
+    }, 0);
     return;
   }
 
-  // Load individual year's file
+  // 2. If Loading: Fetch, then draw
   d3.csv(file)
-    .then(rows => {
-      // Normalize fields so applyConclusionData can use them
-      rows.forEach(d => {
+    .then((rows) => {
+      // Normalize immediately
+      rows.forEach((d) => {
         d.lat = +d.lat;
         d.lon = +d.lon;
         d.fco2antt = +d.fco2antt || +d.fco2 || +d.value || 0;
       });
-
       conclusionFileCache[file] = rows;
-      applyConclusionData(rows);
+
+      // Yield before applying
+      setTimeout(() => {
+        applyConclusionData(rows);
+      }, 0);
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("[conclusion] Failed to load", file, err);
-      applyConclusionData([]); // draw empty globe so it doesn’t freeze
+      // Even the empty draw should be yielded to keep rhythm
+      setTimeout(() => {
+        applyConclusionData([]);
+      }, 0);
     });
 }
-
 
 function drawConclusionGlobe() {
   if (!conclusionCtx || !conclusionProjection || !countries) return;
@@ -2551,25 +2762,65 @@ function initConclusionGlobe() {
 
   resizeConclusionGlobe();
 
-  // set up slider mapping indices -> years
   const slider = document.getElementById("conclusion-year-slider");
   const defaultYear = 2014;
+
   if (slider) {
     slider.min = 0;
     slider.max = conclusionYears.length - 1;
     slider.value = String(conclusionYears.indexOf(defaultYear));
 
+    // --- NEW SMOOTH SLIDER LOGIC ---
+    let isGlobeUpdateScheduled = false;
+
+    let throttleTimer = null;
+    let lastRenderTime = 0;
+
     slider.addEventListener("input", () => {
       const idx = +slider.value;
       const year = conclusionYears[idx];
-      loadConclusionYear(year);
+
+      // 1. Update Text Immediately (Cheap)
+      const labelEl = document.getElementById("conclusion-year-label");
+      if (labelEl) labelEl.textContent = year;
+
+      // 2. Throttle the Heavy Math (Expensive)
+      const now = Date.now();
+
+      // If we haven't drawn in 80ms, draw immediately (updates WHILE dragging)
+      if (now - lastRenderTime > 80) {
+        loadConclusionYear(year);
+        lastRenderTime = now;
+      }
+
+      // ALWAYS schedule a "trailing" update.
+      // This guarantees that when you STOP dragging, the final year is drawn.
+      clearTimeout(throttleTimer);
+      throttleTimer = setTimeout(() => {
+        loadConclusionYear(year);
+        lastRenderTime = Date.now();
+      }, 80);
     });
+    // --------------------------------
+
+    // Pause starfield while interacting
+    const pauseStars = () => {
+      starsPaused = true;
+    };
+    const resumeStars = () => {
+      starsPaused = false;
+    };
+
+    slider.addEventListener("pointerdown", pauseStars);
+    slider.addEventListener("pointerup", resumeStars);
+    slider.addEventListener("pointercancel", resumeStars);
+    slider.addEventListener("pointerleave", resumeStars);
+
+    // Initial load
+    loadConclusionYear(defaultYear);
   }
 
-  // default year
-  loadConclusionYear(defaultYear);
-
-  // drag-to-rotate
+  // ... (keep your existing drag-to-rotate logic below) ...
   conclusionCanvas.addEventListener("mousedown", (e) => {
     conclusionDragging = true;
     dragStart = [e.clientX, e.clientY];
@@ -2693,8 +2944,14 @@ if (backToIntroBtn) {
       top: 0,
       behavior: "smooth",
     });
+
+    if (typeof resizeGlobe === "function") {
+      resizeGlobe(); // or updateProjectionScale(); whichever your code uses
+      draw(); // force a repaint so spacing fixes instantly
+    }
   });
 }
+
 
 const backToRaceBtn = document.getElementById("back-to-race-btn");
 if (backToRaceBtn) {
@@ -2702,32 +2959,63 @@ if (backToRaceBtn) {
     // Only do this if we’re already in the story and not mid-warp/zoom
     if (!isInStory || isWarping || isZooming) return;
 
-    // Lock scroll again while the overlay is up
+    // 1) Lock scroll while the race overlay is up
     lockScroll();
 
-    // Reset race panel state so animations can play nicely
-    document.body.classList.remove("race-expanded", "race-lift");
+    // 2) Clear any “step” / zoom state from the timeline
+    currentStepElement = null;
+    focusLon = null;
+    focusLat = null;
+    activeRegionLabel = "";
+    currentStepZoomMultiplier = 1;
 
-    // Make sure intro cards are visible again 
-    const introCardsEl = document.getElementById("intro-cards");
-    if (introCardsEl) {
-      introCardsEl.style.display = "flex";
+    // 3) Reset year toggle back to event mode and hide it
+    if (yearToggleEl) {
+      currentYearMode = "event";
+      yearToggleEl.classList.remove("visible");
+      yearToggleButtons.forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.mode === "event");
+      });
     }
 
-    // Activate cinematic overlay + race panel
+    // 4) Show intro cards / race again
     showIntroCards();
 
-    const scrollyTop = scrolly.offsetTop;
-    window.scrollTo({
-      top: scrollyTop,
-      behavior: "smooth",
+    // 5) Wait a frame for layout, then reset the globe + scroll
+    requestAnimationFrame(() => {
+      // Recompute canvas + panel size
+      resizeCanvas();
+
+      // Reset rotation to default intro view
+      if (projection) {
+        projection.rotate([0, 0, 0]);
+        // Intro scene scale
+        projection.scale(targetScale * 0.9);
+      }
+
+      // Load original intro data (1850)
+      updateYear("data/1850_co.csv");
+
+      // Redraw globe
+      draw();
+
+      // Scroll so the race/intro area is in view
+      const scrollyTop = scrolly ? scrolly.offsetTop : 0;
+      window.scrollTo({
+        top: scrollyTop,
+        behavior: "smooth",
+      });
     });
   });
 }
 
+
 const backToTimelineBtn = document.getElementById("back-to-timeline-btn");
 if (backToTimelineBtn && conclusionSection) {
   backToTimelineBtn.addEventListener("click", () => {
+    // Put starfield & state back into story / timeline mode
+    cleanupStarsForTimeline();
+
     // 1) Hide the conclusion section again
     conclusionSection.classList.add("hidden-outro");
 
@@ -2737,10 +3025,7 @@ if (backToTimelineBtn && conclusionSection) {
       scrollyEl.style.display = ""; // revert to CSS (flex)
     }
 
-    // 3) Make sure cinematic mode is off
-    document.body.classList.remove("cinematic-mode");
-
-    // 4) Scroll to the current active newspaper page (or first one)
+    // 3) Scroll to the current active newspaper page (or first one)
     let targetBlock = document.querySelector(
       ".step-block.newspaper-page.is-active"
     );
@@ -2755,12 +3040,12 @@ if (backToTimelineBtn && conclusionSection) {
 
       window.scrollTo({
         top: targetTop,
-        behavior: "smooth",
+        behavior: "auto",
       });
 
       // Re-activate the step so the globe + toggle state are correct
       const stepEl = targetBlock.querySelector(".step");
-      if (stepEl && isInStory && !isWarping && !isZooming) {
+      if (stepEl && !isWarping && !isZooming) {
         handleStepEnter(stepEl);
       }
     }
