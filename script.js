@@ -1688,17 +1688,18 @@ async function handleStepEnter(element) {
   // Track active step for the toggle
   currentStepElement = element;
 
-  // Show or hide year toggle depending on whether this step has an "after" file
+  // Always reset toggle to the event year when entering ANY step
+  currentYearMode = "event";
   if (yearToggleEl) {
+    yearToggleButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.mode === "event");
+    });
+
+    // Show or hide the toggle depending on whether this step has an "after" file
     if (element.dataset.globeFileAfter) {
       yearToggleEl.classList.add("visible");
     } else {
       yearToggleEl.classList.remove("visible");
-      // Reset mode to event when we enter a step with no +5y data (like 2014)
-      currentYearMode = "event";
-      yearToggleButtons.forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.mode === "event");
-      });
     }
   }
 
@@ -1714,7 +1715,6 @@ async function handleStepEnter(element) {
   if (globeFile) {
     updateYear(globeFile);
   }
-
 
   if (chartFile && region) {
     const chartDiv = block.querySelector(".chart");
