@@ -106,7 +106,7 @@ function endMainGlobeDrag() {
 }
 
 
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 // === Historical events per region (for annotations) ===
 const REGION_EVENTS = {
