@@ -1904,7 +1904,7 @@ d3.json("data/countries.json").then((world) => {
     resizeCanvas();
     draw();
   }
-
+  setupConclusionButton();
 });
 const intro = document.querySelector(".intro");
 const scrolly = document.getElementById("scrolly");
@@ -2280,11 +2280,16 @@ if (yearToggleButtons.length) {
     });
   });
 }
+// === Conclusion Button (MUST wait until countries.json is loaded) ===
 const conclusionBtn = document.getElementById("conclusion-btn");
 const conclusionSection = document.getElementById("conclusion");
-if (conclusionBtn && conclusionSection) {
+
+function setupConclusionButton() {
+  if (!conclusionBtn || !conclusionSection) return;
+
   conclusionBtn.addEventListener("click", () => {
-    // 1) Hide the Event / +10 Years toggle in conclusion
+
+    // hide year toggle
     if (yearToggleEl) {
       yearToggleEl.classList.remove("visible");
       currentYearMode = "event";
@@ -2293,35 +2298,33 @@ if (conclusionBtn && conclusionSection) {
       });
     }
 
-    // 2) Reveal the conclusion section
+    // reveal the conclusion section
     conclusionSection.classList.remove("hidden-outro");
 
+    // IMPORTANT: now that countries is guaranteed loaded,
+    // the globe can safely initialize
     if (!conclusionInitialized) {
-      initConclusionGlobe();
+      requestAnimationFrame(() => {
+        initConclusionGlobe();
+      });
     } else {
-      resizeConclusionGlobe();
-      drawConclusionGlobe();
+      requestAnimationFrame(() => {
+        resizeConclusionGlobe();
+        drawConclusionGlobe();
+      });
     }
 
-    // 3) Hide the scrolly section so user can't go back to events
+    // hide timeline and scroll to conclusion
     const scrollyEl = document.getElementById("scrolly");
-    if (scrollyEl) {
-      scrollyEl.style.display = "none";
-    }
-
-    // 4) Make sure cinematic-mode is off
+    if (scrollyEl) scrollyEl.style.display = "none";
     document.body.classList.remove("cinematic-mode");
-    
 
-    // 5) Scroll to the conclusion section
     conclusionSection.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
   });
 }
-
-
 
 if (!DEV_MODE) {
   lockScroll();
@@ -2339,16 +2342,8 @@ let conclusionColorScale = d3
   .range(["#020b1f", "#38bdf8", "#f97316"])
   .clamp(true);
 
-const conclusionYears = [1880, 1908, 1930, 1945, 1952, 1955, 2014];
-const conclusionYearFiles = {
-  1880: "data/1880_co.csv",
-  1908: "data/1908_co.csv",
-  1930: "data/1930_co.csv",
-  1945: "data/1945_co.csv",
-  1952: "data/1952_co.csv",
-  1955: "data/1955_co.csv",
-  2014: "data/2014_co.csv",
-};
+// All years from 1850–2014 (inclusive)
+const conclusionYears = d3.range(1850, 2015);
 
 let conclusionInitialized = false;
 let conclusionDragging = false;
@@ -2379,58 +2374,97 @@ function resizeConclusionGlobe() {
   drawConclusionGlobe();
 }
 
-function applyConclusionData(data) {
-  const yearData = data.map((d) => ({
-    lat: +d.lat,
-    lon: +d.lon,
-    co2: +d.fco2antt,
-  }));
+function applyConclusionData(rows) {
+  // 1) Map rows into the same structure used by updateYear()
+  let yearData = rows.map(d => {
+    return {
+      lat: +d.lat,
+      lon: +d.lon,
+      co2: +d.fco2antt,
+      weight: 1  // in conclusion there is no regional mask, matches timeline outside steps
+    };
+  });
 
-  const landValues = yearData
-    .filter((d) => d.co2 > 0)
-    .map((d) => d.co2)
-    .sort(d3.ascending);
+  // 2) Filter like timeline: drop extremely low-weight / invalid
+  let scaleSample = yearData.filter(d => d.co2 > 0 && d.weight > 0.2);
+  if (!scaleSample.length) {
+    scaleSample = yearData.filter(d => d.co2 > 0);
+  }
 
+  // 3) Same quantile domain used in timeline
+  const landValues = scaleSample.map(d => d.co2).sort(d3.ascending);
   if (landValues.length) {
-    const q80 = d3.quantile(landValues, 0.80);
-    const q95 = d3.quantile(landValues, 0.99);
+    const q80 = d3.quantile(landValues, 0.8);
+    const q95 = d3.quantile(landValues, 0.95);
     conclusionColorScale.domain([0, q80, q95]);
   }
 
-  const binnedData = d3.rollup(
+  // 4) IDENTICAL binning to timeline globe
+  const BIN_SIZE = 1;
+  const binned = d3.rollup(
     yearData,
-    (v) => d3.mean(v, (d) => d.co2),
-    (d) => Math.round(d.lat),
-    (d) => Math.round(d.lon)
+    v => ({
+      co2: d3.mean(v, d => d.co2),
+      weight: d3.mean(v, d => d.weight)
+    }),
+    d => Math.round(d.lat / BIN_SIZE) * BIN_SIZE,
+    d => Math.round(d.lon / BIN_SIZE) * BIN_SIZE
   );
 
+  // 5) Build plotData exactly like timeline does (including jitter)
   conclusionPlotData = [];
-  binnedData.forEach((lons, lat) => {
-    lons.forEach((co2, lon) => {
-      conclusionPlotData.push({ lat: +lat, lon: +lon, co2 });
+  binned.forEach((lons, lat) => {
+    lons.forEach((val, lon) => {
+      conclusionPlotData.push({
+        lat: +lat,
+        lon: +lon,
+        co2: val.co2,
+        weight: val.weight,
+        jitterX: (Math.random() - 0.5) * 1.2,
+        jitterY: (Math.random() - 0.5) * 1.2
+      });
     });
   });
 
   drawConclusionGlobe();
 }
 
+
+// Cache to avoid re-fetching 165 separate files
+let conclusionFileCache = {};
+
 function loadConclusionYear(year) {
-  const file = conclusionYearFiles[year];
-  if (!file || !conclusionCanvas) return;
+  const file = `data/${year}_co.csv`;
 
   // update label
   const labelEl = document.getElementById("conclusion-year-label");
   if (labelEl) labelEl.textContent = year;
 
-  if (globeCache[file]) {
-    applyConclusionData(globeCache[file]);
+  // If cached, skip reload
+  if (conclusionFileCache[file]) {
+    applyConclusionData(conclusionFileCache[file]);
     return;
   }
-  d3.csv(file).then((data) => {
-    globeCache[file] = data;
-    applyConclusionData(data);
-  });
+
+  // Load individual year's file
+  d3.csv(file)
+    .then(rows => {
+      // Normalize fields so applyConclusionData can use them
+      rows.forEach(d => {
+        d.lat = +d.lat;
+        d.lon = +d.lon;
+        d.fco2antt = +d.fco2antt || +d.fco2 || +d.value || 0;
+      });
+
+      conclusionFileCache[file] = rows;
+      applyConclusionData(rows);
+    })
+    .catch(err => {
+      console.error("[conclusion] Failed to load", file, err);
+      applyConclusionData([]); // draw empty globe so it doesn’t freeze
+    });
 }
+
 
 function drawConclusionGlobe() {
   if (!conclusionCtx || !conclusionProjection || !countries) return;
@@ -2438,14 +2472,18 @@ function drawConclusionGlobe() {
   const canvas = conclusionCanvas;
   conclusionCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const t = conclusionProjection.translate();
-  const cx = t[0];
-  const cy = t[1];
-  const r = conclusionProjection.scale() - 3;
+const t = conclusionProjection.translate();
+const cx = t[0];
+const cy = t[1];
+let r = conclusionProjection.scale() - 3;
 
-  // ocean
-  conclusionCtx.beginPath();
-  conclusionCtx.arc(cx, cy, r, 0, Math.PI * 2);
+// avoid negative radius if something funky happens with sizing
+if (r <= 0) return;
+
+// ocean
+conclusionCtx.beginPath();
+conclusionCtx.arc(cx, cy, r, 0, Math.PI * 2);
+
   conclusionCtx.fillStyle = OCEAN_COLOR;
   conclusionCtx.fill();
 
@@ -2670,7 +2708,7 @@ if (backToRaceBtn) {
     // Reset race panel state so animations can play nicely
     document.body.classList.remove("race-expanded", "race-lift");
 
-    // Make sure intro cards are visible again (showIntroCards will also do this)
+    // Make sure intro cards are visible again 
     const introCardsEl = document.getElementById("intro-cards");
     if (introCardsEl) {
       introCardsEl.style.display = "flex";
@@ -2679,7 +2717,6 @@ if (backToRaceBtn) {
     // Activate cinematic overlay + race panel
     showIntroCards();
 
-    // Optional: gently recenter on the globe / scrolly top
     const scrollyTop = scrolly.offsetTop;
     window.scrollTo({
       top: scrollyTop,
