@@ -1988,3 +1988,15 @@ body.intro-mode #intro-cards {
   color: #ffffff;
   text-shadow: none;
 }
+
+/* Make both globes show a grab cursor on hover */
+#globe,
+#globe-conclusion {
+  cursor: grab;
+}
+
+/* While mouse is held down directly on the canvas */
+#globe:active,
+#globe-conclusion:active {
+  cursor: grabbing;
+}
