@@ -106,7 +106,7 @@ function endMainGlobeDrag() {
 }
 
 
-const DEV_MODE = false;
+const DEV_MODE = true;
 
 // === Historical events per region (for annotations) ===
 const REGION_EVENTS = {
@@ -2253,7 +2253,10 @@ function playOutroWarpToConclusion(onComplete) {
     if (onComplete) onComplete();
     return;
   }
-
+  const scrollyEl = document.getElementById("scrolly");
+  if (scrollyEl) {
+    scrollyEl.style.display = "none";
+  }
   // Flag this as the outro warp so streak colors change
   isOutroWarp = true;
 
