@@ -44,11 +44,9 @@ let dotAlpha = 1.0;
 let starsInitialized = false;
 let isOutroWarp = false;
 
-let currentYearMode = "event"; // "event" or "after"
+let currentYearMode = "event"; 
 let currentStepElement = null; 
 
-
-// === Manual rotation for main globe ===
 let mainGlobeDragging = false;
 let mainGlobeDragStart = null;
 let mainGlobeRotationStart = null;
@@ -70,7 +68,7 @@ function beginMainGlobeDrag(clientX, clientY) {
   mainGlobeDragStart = [clientX, clientY];
   mainGlobeRotationStart = projection.rotate();
 
-  // If an auto-rotation tween is running (from scroll), cancel it
+  
   if (activeRotationTween && activeRotationTween.cancel) {
     activeRotationTween.cancel = true;
     activeRotationTween = null;
@@ -85,12 +83,12 @@ function moveMainGlobeDrag(clientX, clientY) {
   const dx = clientX - mainGlobeDragStart[0];
   const dy = clientY - mainGlobeDragStart[1];
 
-  const sensitivity = 0.3; // tweak if you want slower/faster spin
+  const sensitivity = 0.3; 
 
   const newRotate = [
-    mainGlobeRotationStart[0] + dx * sensitivity, // yaw
-    mainGlobeRotationStart[1] - dy * sensitivity, // pitch
-    mainGlobeRotationStart[2],                    // keep roll
+    mainGlobeRotationStart[0] + dx * sensitivity, 
+    mainGlobeRotationStart[1] - dy * sensitivity, 
+    mainGlobeRotationStart[2],                    
   ];
 
   projection.rotate(newRotate);
@@ -105,10 +103,8 @@ function endMainGlobeDrag() {
   canvas.style.cursor = "";
 }
 
-
 const DEV_MODE = false;
 
-// === Historical events per region (for annotations) ===
 const REGION_EVENTS = {
   "Africa": [
     { year: 1880, label: "Scramble for\nAfrica" },
@@ -140,14 +136,13 @@ const BENEFICIARY_REGIONS_BY_STEP = {
   ],
   "step-1945": [{ label: "United States", lat: 39, lon: -98 }],
   "step-1952": [
-    // just the UK halo as the exploited/beneficiary region, no extra labels
+    
   ],
   "step-1955": [
     { label: "United States", lat: 39, lon: -98 },
     { label: "France", lat: 46, lon: 2 },
   ],
 };
-
 
 function resizeSpaceCanvas() {
   spaceWidth = window.innerWidth;
@@ -186,11 +181,10 @@ function initStars() {
 function renderSpace(timestamp) {
 
   if (starsPaused) {
-    lastTime = timestamp; // avoid a huge delta when we resume
+    lastTime = timestamp; 
     requestAnimationFrame(renderSpace);
     return;
   }
-
 
   if (!lastTime) lastTime = timestamp;
   const deltaTime = (timestamp - lastTime) / 16.66;
@@ -199,14 +193,14 @@ function renderSpace(timestamp) {
   const inStorySteps = isStoryActive;
 
   if (!isInStory) {
-    // INTRO MODE
+    
     warpTarget = WARP_IDLE;
     starTargetAlpha = 1;
   } else if (isWarping) {
-    // WARP MODE
-    // do nothing — warpTarget already controlled by enterStory()
+    
+    
   } else {
-    // STORY MODE
+    
     warpTarget = 0;
     starTargetAlpha = 0;
   }
@@ -223,12 +217,11 @@ spaceCtx.fillRect(0, 0, spaceWidth, spaceHeight);
   spaceCtx.fillStyle = "rgba(2, 6, 35, 1)";
   spaceCtx.fillRect(0, 0, spaceWidth, spaceHeight);
 
-  // keep the loop alive so when we flip back to intro,
-  // stars can start drawing again
+  
+  
   requestAnimationFrame(renderSpace);
   return;
 }
-
 
   for (const star of stars) {
     star.x += star.vx * star.speed * warpFactor * deltaTime;
@@ -268,19 +261,18 @@ spaceCtx.fillRect(0, 0, spaceWidth, spaceHeight);
       const tailX = star.x - star.vx * trailLength;
       const tailY = star.y - star.vy * trailLength;
 
-      // Intro warp = cool blue, outro warp = warmer magenta/pink
+      
       let baseHue;
       if (isOutroWarp) {
-        // reverse warp → more cosmic purple / magenta
+        
         baseHue = 295 + 40 * Math.sin(warpHuePhase * 0.6);
       } else {
-        // original intro warp look
+        
         baseHue = 220 + 80 * Math.sin(warpHuePhase * 0.5);
       }
 
       const hue = (baseHue + star.hueOffset + 360) % 360;
       const lightness = 55 + Math.min(warpIntensity, 5) * 7;
-
 
       spaceCtx.globalAlpha = starGlobalAlpha;
       spaceCtx.lineCap = "round";
@@ -316,7 +308,7 @@ const introCards = document.getElementById("intro-cards");
 function showIntroCards() {
   const introCardsEl = document.getElementById("intro-cards");
   if (introCardsEl) {
-    introCardsEl.style.display = "flex"; // <-- make sure it's visible again
+    introCardsEl.style.display = "flex"; 
   }
 
   document.body.classList.add("cinematic-mode");
@@ -326,7 +318,6 @@ function showIntroCards() {
     expandRacePanel();
   }, 800);
 }
-
 
 function hideIntroCards() {
   document.body.classList.remove("story-intro-active");
@@ -376,7 +367,6 @@ function initBarChartRace() {
   const margin = { top: 20, right: 40, bottom: 30, left: 120 };
   const innerWidth = racePanelInner.clientWidth;
   const innerHeight = racePanelInner.clientHeight;
-
 
   const width = innerWidth - margin.left - margin.right;
   const height = innerHeight - margin.top - margin.bottom;
@@ -664,7 +654,6 @@ function lockScroll() {
   window.addEventListener("keydown", preventScrollKeys, { passive: false });
 }
 
-
 function unlockScroll() {
   scrollLocked = false;
   absorbNextScroll = true;
@@ -700,15 +689,13 @@ function resizeCanvas() {
 
   targetScale = Math.min(width, height) / 2.2;
 
-  // FIXED globe size – no per-step zoom multiplier
+  
   const zoomMult = currentStepZoomMultiplier || 1;
   setProjection(targetScale * zoomMult, width, height);
   projection.rotate(oldRotation);
 
   draw();
 }
-
-
 
 function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -788,10 +775,10 @@ function draw() {
     const maxVal = domain[domain.length - 1] || 1;
 
     plotData.forEach((d) => {
-      // 1) Cull points on the back side of the globe
+      
       if (!isPointOnFrontHemisphere(d.lat, d.lon)) return;
 
-      // 2) Then project + do your existing circle clip
+      
       const coords = projection([d.lon, d.lat]);
       if (!coords) return;
 
@@ -821,7 +808,6 @@ function draw() {
       context.fill();
     });
     context.globalAlpha = 1;
-
 
     if (focusLon != null && focusLat != null && !inCinematic) {
       const focusCoords = projection([focusLon, focusLat]);
@@ -853,7 +839,7 @@ function draw() {
 
         context.restore();
   
-        // Only show label once rotation tween is finished
+        
         if (activeRegionLabel && !activeRotationTween) {
           context.save();
           context.font =
@@ -865,25 +851,25 @@ function draw() {
           context.fillStyle = "#e5e7eb";
 
           if (activeRegionLabel === "Africa") {
-            // AFRICA: label right in the middle, no line
+            
             const labelX = fx;
             const labelY = fy;
             context.fillText(activeRegionLabel, labelX, labelY);
           } else {
-            // Everyone else: offset label + leader line
+            
 
-            // vector from globe center → region center
+            
             const vx = fx - cx;
             const vy = fy - cy;
             const dist = Math.sqrt(vx * vx + vy * vy);
 
-            // how far to push the label away from the region
-            const offset = r * 0.22; // tweak if needed
+            
+            const offset = r * 0.22; 
 
             let labelX, labelY;
 
             if (dist < r * 0.05) {
-              // if the focus is basically at the center, shove label to the right
+              
               labelX = fx + offset;
               labelY = fy;
             } else {
@@ -893,7 +879,7 @@ function draw() {
               labelY = fy + uy * offset;
             }
 
-            // leader line
+            
             context.beginPath();
             context.moveTo(fx, fy);
             context.lineTo(labelX, labelY);
@@ -901,20 +887,20 @@ function draw() {
             context.lineWidth = 0.8;
             context.stroke();
 
-            // text
+            
             context.fillText(activeRegionLabel, labelX, labelY);
           }
 
                     context.restore();
 
-                    // --- Beneficiary markers: same pointer-style labels, no halo ---
+                    
                     if (currentStepElement && !inCinematic) {
                       const stepId = currentStepElement.id;
                       const beneficiaries = BENEFICIARY_REGIONS_BY_STEP[stepId];
 
                       if (beneficiaries && beneficiaries.length) {
                         beneficiaries.forEach((b) => {
-                          // Only draw if the point is on the visible hemisphere
+                          
                           if (!isPointOnFrontHemisphere(b.lat, b.lon)) return;
 
                           const coords = projection([b.lon, b.lat]);
@@ -923,7 +909,7 @@ function draw() {
                           const bx = coords[0];
                           const by = coords[1];
 
-                          // Make sure it's on the disc, not off the edge
+                          
                           const dx = bx - cx;
                           const dy = by - cy;
                           if (dx * dx + dy * dy > r * r) return;
@@ -937,16 +923,16 @@ function draw() {
                           context.shadowBlur = 5;
                           context.fillStyle = "#e5e7eb";
 
-                          // Pointer math: same idea as the main event label
+                          
                           const vx = bx - cx;
                           const vy = by - cy;
                           const dist = Math.sqrt(vx * vx + vy * vy);
 
-                          const offset = r * 0.22; // same as activeRegionLabel
+                          const offset = r * 0.22; 
 
                           let labelX, labelY;
                           if (dist < r * 0.05) {
-                            // If close to center, shove label to the right
+                            
                             labelX = bx + offset;
                             labelY = by;
                           } else {
@@ -956,7 +942,7 @@ function draw() {
                             labelY = by + uy * offset;
                           }
 
-                          // leader line
+                          
                           context.beginPath();
                           context.moveTo(bx, by);
                           context.lineTo(labelX, labelY);
@@ -964,7 +950,7 @@ function draw() {
                           context.lineWidth = 0.7;
                           context.stroke();
 
-                          // text
+                          
                           context.fillText(b.label, labelX, labelY);
 
                           context.restore();
@@ -976,9 +962,6 @@ function draw() {
       }
     }
   }
-
-
-
 
 if (!isZooming && countries) {
   context.beginPath();
@@ -996,8 +979,6 @@ if (!isZooming && countries) {
   context.fill();
   context.stroke();
 }}
-
-
 
 window.addEventListener("resize", resizeCanvas);
 const CO2_MIN = 0;
@@ -1020,7 +1001,7 @@ function regionWeight(p) {
 
 function updateYear(csvFile) {
   function applyGlobeData(data) {
-    // 1) Map raw rows to objects with region weights
+    
     const yearData = data.map((d) => {
       const obj = {
         lat: +d.lat,
@@ -1031,20 +1012,20 @@ function updateYear(csvFile) {
       return obj;
     });
 
-    // 2) Choose color scale: fixed per-step if available,
-    // otherwise fall back to per-year scaling
+    
+    
     const stepId = currentStepElement ? currentStepElement.id : null;
     const fixedDomain =
       stepId && stepColorDomains[stepId] ? stepColorDomains[stepId] : null;
 
     if (fixedDomain) {
-      // Use the shared domain for this step (event +10y)
+      
       colorScale.domain(fixedDomain);
     } else {
       let scaleSample = yearData.filter((d) => d.co2 > 0 && d.weight > 0.2);
 
       if (!scaleSample.length) {
-        // Fallback: use all positive values if something went weird
+        
         scaleSample = yearData.filter((d) => d.co2 > 0);
       }
 
@@ -1057,7 +1038,7 @@ function updateYear(csvFile) {
       }
     }
 
-    // 3) Only keep points with some visible weight
+    
     let drawSource = yearData.filter((d) => d.weight > 0.01);
 
     const BIN_SIZE = 1;
@@ -1079,7 +1060,7 @@ function updateYear(csvFile) {
           lon: +lon,
           co2: val.co2,
           weight: val.weight,
-          // precompute a tiny jitter once so we don't call Math.random in draw()
+          
           jitterX: (Math.random() - 0.5) * 1.2,
           jitterY: (Math.random() - 0.5) * 1.2,
         });
@@ -1106,7 +1087,7 @@ function updateYear(csvFile) {
 }
 function animateDotTransition(onMidpoint) {
   if (dotTransitionAnimating) {
-    // If a transition is in progress, just call the mid-callback immediately
+    
     if (onMidpoint) onMidpoint();
     return;
   }
@@ -1120,10 +1101,10 @@ function animateDotTransition(onMidpoint) {
     const t = Math.min((now - start) / duration, 1);
 
     if (t < 0.5) {
-      // fade/shrink out
+      
       dotTransition = 1 - t * 2;
     } else {
-      // fade/shrink in
+      
       dotTransition = (t - 0.5) * 2;
 
       if (!midCalled && onMidpoint) {
@@ -1146,27 +1127,26 @@ function animateDotTransition(onMidpoint) {
   requestAnimationFrame(frame);
 }
 function isPointOnFrontHemisphere(latDeg, lonDeg) {
-  // d3-geo convention:
-  // projection.rotate() = [lambda0, phi0, gamma]
-  // Visible center on the globe is actually at (-lambda0, -phi0).
+  
+  
+  
   const [lambda0, phi0] = projection.rotate();
 
-  // Actual center lat/lon in radians
+  
   const λc = (-lambda0 * Math.PI) / 180;
   const φc = (-phi0 * Math.PI) / 180;
 
-  // Point we’re testing
+  
   const λ = (lonDeg * Math.PI) / 180;
   const φ = (latDeg * Math.PI) / 180;
 
-  // cos(c) for angular distance between (lat,lon) and the current center
-  // > 0  → front hemisphere relative to that center
+  
+  
   const cosc =
     Math.sin(φc) * Math.sin(φ) + Math.cos(φc) * Math.cos(φ) * Math.cos(λ - λc);
 
   return cosc > 0;
 }
-
 
 function getGlobeFileForStep(stepEl) {
   if (!stepEl) return null;
@@ -1185,7 +1165,7 @@ async function ensureStepColorDomain(stepEl) {
   const stepId = stepEl.id || stepEl.dataset.stepId;
   if (!stepId) return null;
 
-  // If we've already computed it, reuse
+  
   if (stepColorDomains[stepId]) {
     return stepColorDomains[stepId];
   }
@@ -1194,10 +1174,10 @@ async function ensureStepColorDomain(stepEl) {
   const afterFile = stepEl.dataset.globeFileAfter;
   const files = [baseFile, afterFile].filter(Boolean);
 
-  // If there's no data at all, nothing to do
+  
   if (!files.length) return null;
 
-  // Load all the files (using globeCache if available)
+  
   const datasets = await Promise.all(
     files.map((file) => {
       if (globeCache[file]) return Promise.resolve(globeCache[file]);
@@ -1208,7 +1188,7 @@ async function ensureStepColorDomain(stepEl) {
     })
   );
 
-  // Collect regional values across BOTH years
+  
   let values = [];
 
   datasets.forEach((data) => {
@@ -1220,14 +1200,14 @@ async function ensureStepColorDomain(stepEl) {
       };
       obj.weight = regionWeight(obj);
 
-      // Only sample inside the focused region
+      
       if (obj.co2 > 0 && obj.weight > 0.2) {
         values.push(obj.co2);
       }
     });
   });
 
-  // Fallback: if something went weird with weights, use all positive values
+  
   if (!values.length) {
     datasets.forEach((data) => {
       data.forEach((d) => {
@@ -1248,46 +1228,44 @@ async function ensureStepColorDomain(stepEl) {
   return domain;
 }
 
-
-
 const stepViews = {
-  // Africa – same
+  
   "step-1880": { lon: 18, lat: 2 },
 
-  // Middle East – move the focus north-east to where the emissions band actually is
-  // (around northern Iran / Caspian / Iraq–Turkey area)
+  
+  
   "step-1908": { lon: 45, lat: 35 },
 
-  // Belgium – same
+  
   "step-1930": { lon: 5, lat: 50 },
 
-  // Japan – nudge slightly north so the halo hugs the main islands
+  
   "step-1945": { lon: 138, lat: 38 },
 
-  // UK – move a bit west/north so it covers the whole island group
+  
   "step-1952": { lon: -2, lat: 54 },
 
-  // Vietnam – shift slightly north
+  
   "step-1955": { lon: 107, lat: 16 },
 
-  // 2014 Africa context
+  
   "step-2014": { lon: 18, lat: 2 },
 };
 
 const stepZoomByStep = {
-  "step-1880": 1.15, // Africa – mild zoom
-  "step-1908": 1.6, // Middle East – tighter region
-  "step-1930": 1.8, // Belgium (if re-enabled)
-  "step-1945": 1.8, // Japan
-  "step-1952": 1.8, // UK
-  "step-1955": 1.8, // Vietnam
-  "step-2014": 1.15, // 2014 Africa context (if used)
+  "step-1880": 1.15, 
+  "step-1908": 1.6, 
+  "step-1930": 1.8, 
+  "step-1945": 1.8, 
+  "step-1952": 1.8, 
+  "step-1955": 1.8, 
+  "step-2014": 1.15, 
 };
 
 let currentStepZoomMultiplier = 1;
 
 const regionMaskByStep = {
-  // Africa – wide, since it's a whole continent
+  
   "step-1880": {
     latMin: -35,
     latMax: 20,
@@ -1295,7 +1273,7 @@ const regionMaskByStep = {
     lonMax: 50,
   },
 
-  // Middle East – avoid most of Europe & N. Africa
+  
   "step-1908": {
     latMin: 15,
     latMax: 40,
@@ -1303,7 +1281,7 @@ const regionMaskByStep = {
     lonMax: 65,
   },
 
-  // Belgium – small patch in Western Europe
+  
   "step-1930": {
     latMin: 46,
     latMax: 56,
@@ -1311,7 +1289,7 @@ const regionMaskByStep = {
     lonMax: 10,
   },
 
-  // Japan – try to exclude Korea / China
+  
   "step-1945": {
     latMin: 28,
     latMax: 46,
@@ -1319,7 +1297,7 @@ const regionMaskByStep = {
     lonMax: 147,
   },
 
-  // United Kingdom – just the islands
+  
   "step-1952": {
     latMin: 48,
     latMax: 60,
@@ -1327,7 +1305,7 @@ const regionMaskByStep = {
     lonMax: 4,
   },
 
-  // Vietnam – tighter around Vietnam itself
+  
   "step-1955": {
     latMin: 8,
     latMax: 24,
@@ -1335,7 +1313,7 @@ const regionMaskByStep = {
     lonMax: 110,
   },
 
-  // 2014 Africa context – same as Africa bounds
+  
   "step-2014": {
     latMin: -35,
     latMax: 20,
@@ -1344,28 +1322,27 @@ const regionMaskByStep = {
   },
 };
 
-
 const regionRadiusByStep = {
-  "step-1880": 40, // Africa – keep wide (whole continent)
+  "step-1880": 40, 
 
-  // Middle East – narrower so we don’t grab as much of Europe / N. Africa
+  
   "step-1908": 20,
 
-  "step-1930": 12, // Belgium – slightly smaller
+  "step-1930": 12, 
 
-  // Japan – smaller so we don’t include mainland Asia
+  
   "step-1945": 10,
 
-  // UK – a bit smaller but still enough to cover the islands
+  
   "step-1952": 10,
 
-  // Vietnam – much tighter so it doesn’t pull in half of SE Asia
+  
   "step-1955": 10,
 
-  "step-2014": 40, // Africa context
+  "step-2014": 40, 
 };
 const regionCountriesByStep = {
-  // Middle East oil story
+  
   "step-1908": [
     "Iran",
     "Iraq",
@@ -1381,13 +1358,13 @@ const regionCountriesByStep = {
     "Lebanon",
   ],
 
-  // Japan nuclear/testing story
+  
   "step-1945": ["Japan"],
 
-  // UK smog story
+  
   "step-1952": ["United Kingdom", "Ireland"],
 
-  // Vietnam war story
+  
   "step-1955": ["Vietnam"],
 };
 
@@ -1419,7 +1396,7 @@ function animateGlobeTo(lon, lat, duration = 1600) {
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      // tween is finished – allow label to appear
+      
       activeRotationTween = null;
       draw();
     }
@@ -1428,15 +1405,11 @@ function animateGlobeTo(lon, lat, duration = 1600) {
   requestAnimationFrame(frame);
 }
 
-
-
-
-
 function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
-  // Clear any previous chart in this container
+  
   chartDiv.innerHTML = "";
 
-  // --------- Prepare data ----------
+  
   const parsedData = data.map((d) => ({
     year: +d.year,
     value: +d[regionName],
@@ -1450,27 +1423,27 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     return;
   }
 
-  // --------- Event metadata ----------
+  
   const events = REGION_EVENTS[regionName] || (
     eventYearFromStep ? [{ year: eventYearFromStep, label: null }] : []
   );
 
-  // Use the *first* event year to split the line before/after
+  
   const splitYear = events.length ? events[0].year : eventYearFromStep;
 
-  // Palette: neutral pre-event, orange post-event (color-blind-friendly)
-  const preColor  = "#4b5563";  // slate gray
-  const postColor = "#c026d3";  // magenta
+  
+  const preColor  = "#4b5563";  
+  const postColor = "#c026d3";  
 
-  // --------- Dimensions ----------
+  
   const containerWidth = chartDiv.clientWidth || 500;
-  const svgHeight = 280;  // slightly taller than before
+  const svgHeight = 280;  
 
   const margin = { top: 48, right: 24, bottom: 40, left: 64 };
   const width = containerWidth - margin.left - margin.right;
   const height = svgHeight - margin.top - margin.bottom;
 
-  // --------- Create SVG ----------
+  
   const svg = d3
     .select(chartDiv)
     .append("svg")
@@ -1479,7 +1452,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // --------- Scales ----------
+  
   const x = d3
     .scaleLinear()
     .domain(d3.extent(cleaned, (d) => d.year))
@@ -1493,7 +1466,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     .nice()
     .range([height, 0]);
 
-  // --------- Gridlines ----------
+  
   const yGrid = d3
     .axisLeft(y)
     .ticks(5)
@@ -1509,7 +1482,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     .attr("stroke-opacity", 0.12)
     .attr("stroke-dasharray", "2,2");
 
-  // --------- Axes ----------
+  
   const xAxis = d3.axisBottom(x).ticks(6).tickFormat(d3.format("d"));
   const yAxis = d3.axisLeft(y).ticks(5).tickFormat(d3.format(".2s"));
 
@@ -1523,7 +1496,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
   svg.selectAll(".domain, .tick line").attr("stroke", "#444");
   svg.selectAll(".tick text").attr("fill", "#444");
 
-  // Axis labels
+  
   svg
     .append("text")
     .attr("class", "axis-label")
@@ -1541,7 +1514,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     .attr("text-anchor", "middle")
     .text("Year");
 
-  // --------- Lines (pre vs post splitYear) ----------
+  
   const line = d3
     .line()
     .x((d) => x(d.year))
@@ -1551,7 +1524,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
   const preEvent = cleaned.filter((d) => d.year <= splitYear);
   const postEvent = cleaned.filter((d) => d.year >= splitYear);
 
-  // Before event
+  
   svg
     .append("path")
     .datum(preEvent)
@@ -1560,7 +1533,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     .attr("stroke-width", 2)
     .attr("d", line);
 
-  // After event
+  
   svg
     .append("path")
     .datum(postEvent)
@@ -1570,12 +1543,12 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
     .attr("stroke-dasharray", null)
     .attr("d", line);
 
-  // --------- Event annotations (vertical line + big dot + label) ----------
+  
   const [xMin, xMax] = x.domain();
   const midYear = (xMin + xMax) / 2;
 
   events.forEach((ev, idx) => {
-    // vertical dashed line
+    
     svg
       .append("line")
       .attr("x1", x(ev.year))
@@ -1587,7 +1560,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
       .attr("stroke-dasharray", "4,4")
       .attr("opacity", 0.9);
 
-    // enlarged circle at data point (if we have that year)
+    
     const point = cleaned.find((d) => d.year === ev.year);
     if (point) {
       svg
@@ -1600,19 +1573,19 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
         .attr("stroke-width", 2);
     }
 
-    // ----- multi-line label with consistent bottom alignment -----
+    
     if (ev.label) {
       const anchor = "middle";
       const baseX = x(ev.year);
       const lines = ev.label.split("\n");
 
-      const lineHeight = 11;         // vertical spacing between lines
-      const desiredBottomOffset = 4; // px above the top axis (y = 0)
+      const lineHeight = 11;         
+      const desiredBottomOffset = 4; 
 
-      // We want the *bottom* line’s baseline to sit at -desiredBottomOffset
+      
       const bottomBaselineY = -desiredBottomOffset;
 
-      // Compute the baseline for the FIRST line so the LAST ends up at bottomBaselineY
+      
       const firstLineBaselineY =
         bottomBaselineY - (lines.length - 1) * lineHeight;
 
@@ -1622,7 +1595,7 @@ function drawRegionChart(regionName, chartDiv, data, eventYearFromStep) {
         .attr("x", baseX)
         .attr("y", firstLineBaselineY)
         .attr("text-anchor", anchor)
-        .attr("alignment-baseline", "alphabetic"); // baseline alignment
+        .attr("alignment-baseline", "alphabetic"); 
 
       lines.forEach((line, i) => {
         text
@@ -1644,7 +1617,7 @@ async function initAllRegionCharts() {
   const fileCache = {};
 
   for (const step of steps) {
-    // Read attributes off the step
+    
     let chartFile = step.dataset.chartFile;
     const region = step.dataset.region;
     const year   = +step.dataset.year;
@@ -1661,10 +1634,10 @@ async function initAllRegionCharts() {
       continue;
     }
 
-    // DEBUG: force chartFile if needed
-    // chartFile = "regions_co2.csv";
+    
+    
 
-    // Load + cache the CSV
+    
     if (!fileCache[chartFile]) {
       console.log("[regions] loading CSV:", chartFile);
       try {
@@ -1677,7 +1650,7 @@ async function initAllRegionCharts() {
         );
       } catch (err) {
         console.error("[regions] FAILED to load CSV", chartFile, err);
-        continue; // don’t try to draw if data failed to load
+        continue; 
       }
     }
 
@@ -1713,8 +1686,6 @@ async function initAllRegionCharts() {
   }
 }
 
-
-
 async function handleStepEnter(element) {
   if (!element) return;
 
@@ -1737,24 +1708,24 @@ async function handleStepEnter(element) {
   const id = element.id;
   const view = stepViews[id];
   if (view) {
-    // Rotate to center this region, but keep globe size fixed
+    
     animateGlobeTo(view.lon, view.lat, 1600);
     focusLon = view.lon;
     focusLat = view.lat;
     activeRegionLabel = element.dataset.region || "";
   }
 
-  // Track active step for the toggle
+  
   currentStepElement = element;
 
-  // Always reset toggle to the event year when entering ANY step
+  
   currentYearMode = "event";
   if (yearToggleEl) {
     yearToggleButtons.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.mode === "event");
     });
 
-    // Show or hide the toggle depending on whether this step has an "after" file
+    
     if (element.dataset.globeFileAfter) {
       yearToggleEl.classList.add("visible");
     } else {
@@ -1762,10 +1733,10 @@ async function handleStepEnter(element) {
     }
   }
 
-  // Ensure the shared color domain (event +5y) is computed for this step
+  
   await ensureStepColorDomain(element);
 
-  // Pick appropriate file based on current mode
+  
   const globeFile = getGlobeFileForStep(element);
   const chartFile = element.dataset.chartFile;
   const region = element.dataset.region;
@@ -1796,8 +1767,8 @@ function triggerPageFlip(prevBlock, nextBlock, direction) {
 
   const forward = direction === "down";
 
-  // --- FIRST TIME WE EVER SHOW A NEWSPAPER PAGE ---
-  // or if Scrollama re-fires on the same block.
+  
+  
   if (!hasShownFirstPage || !prevBlock || prevBlock === nextBlock) {
     nextSheet.classList.remove(
       "page-flip-in-forward",
@@ -1808,10 +1779,10 @@ function triggerPageFlip(prevBlock, nextBlock, direction) {
     nextSheet.classList.add("page-current");
     hasShownFirstPage = true;
     lastStepBlock = nextBlock;
-    return; // <- no animation
+    return; 
   }
 
-  // Clean up any old animation classes on the incoming sheet
+  
   nextSheet.classList.remove(
     "page-flip-in-forward",
     "page-flip-in-back",
@@ -1819,10 +1790,10 @@ function triggerPageFlip(prevBlock, nextBlock, direction) {
     "page-flip-out-back"
   );
 
-  // Mark this as the current page
+  
   nextSheet.classList.add("page-current");
 
-  // Animate the previous page flipping away
+  
   if (prevBlock && prevBlock !== nextBlock) {
     const prevSheet = prevBlock.querySelector(".newspaper-sheet");
     if (prevSheet) {
@@ -1850,7 +1821,7 @@ function triggerPageFlip(prevBlock, nextBlock, direction) {
     }
   }
 
-  // Animate the new page flipping in
+  
   const inClass = forward ? "page-flip-in-forward" : "page-flip-in-back";
   nextSheet.classList.add(inClass);
 
@@ -1858,15 +1829,13 @@ function triggerPageFlip(prevBlock, nextBlock, direction) {
     "animationend",
     () => {
       nextSheet.classList.remove("page-flip-in-forward", "page-flip-in-back");
-      // keep page-current
+      
     },
     { once: true }
   );
 
   lastStepBlock = nextBlock;
 }
-
-
 
 d3.json("data/countries.json").then((world) => {
   countries = topojson.feature(world, world.objects.countries);
@@ -1890,11 +1859,11 @@ d3.json("data/countries.json").then((world) => {
       isZooming ||
       document.body.classList.contains("cinematic-mode")
     ) {
-      // If we're in warp / intro / race overlay, ignore step events
+      
       return;
     }
 
-    // Trigger page flip animation between last and current blocks
+    
     triggerPageFlip(lastStepBlock, element, direction || "down");
     lastStepBlock = element;
 
@@ -1904,12 +1873,11 @@ d3.json("data/countries.json").then((world) => {
     }
   });
 
-
   window.addEventListener("resize", () => {
     scroller.resize();
   });
 
-  // charts always-on
+  
   initAllRegionCharts();
 
   const firstBlock = document.querySelector(".step-block.newspaper-page");
@@ -1923,24 +1891,24 @@ d3.json("data/countries.json").then((world) => {
   }
   
   if (DEV_MODE) {
-    // Pretend we've already done the warp/year scene
+    
     hasWarped = true;
     isInStory = true;
     isWarping = false;
 
-    // Make sure we’re not in cinematic/intro state
+    
     document.body.classList.remove("scroll-locked");
     document.body.classList.remove("cinematic-mode");
 
     if (intro) {
-      intro.classList.add("slide-up"); // hide the big intro card
+      intro.classList.add("slide-up"); 
     }
 
     if (scrolly) {
       scrolly.classList.add("visible");
     }
 
-    // Activate the first newspaper page + step
+    
     const firstBlock = document.querySelector(".step-block.newspaper-page");
     if (firstBlock) {
       const firstStep = firstBlock.querySelector(".step");
@@ -1948,7 +1916,7 @@ d3.json("data/countries.json").then((world) => {
         handleStepEnter(firstStep);
       }
 
-      // Scroll so the first page sits nicely in view
+      
       const rect = firstBlock.getBoundingClientRect();
       const offset = window.innerHeight * 0.2;
       const targetTop = window.pageYOffset + rect.top - offset;
@@ -1959,7 +1927,7 @@ d3.json("data/countries.json").then((world) => {
       });
     }
 
-    // Make sure the globe is sized correctly
+    
     resizeCanvas();
     draw();
   }
@@ -1968,7 +1936,6 @@ d3.json("data/countries.json").then((world) => {
 const intro = document.querySelector(".intro");
 const scrolly = document.getElementById("scrolly");
 
-// === YEAR SEQUENCE (Steins;Gate-style world-line year gate) ===
 const yearOverlay = document.getElementById("year-sequence-overlay");
 const yearDisplay = document.getElementById("year-sequence-year");
 const yearSubtitle = document.getElementById("year-sequence-subtitle");
@@ -1979,19 +1946,19 @@ function playYearSequence(onComplete) {
     return;
   }
 
-  // Start overlay
+  
   yearOverlay.classList.remove("fade-out");
   yearOverlay.classList.add("visible");
 
-  // Initial state: present day
+  
   yearDisplay.textContent = "2025";
   yearSubtitle.textContent = "Going back in time...";
 
-  // 0.5s hold on 2025 before any shuffling
-  const PRE_SCRAMBLE_HOLD = 500; // ms to pause on 2025
-  const SCRAMBLE_DURATION = 1500; // ms of random digits
-  const HOLD_FINAL_DURATION = 1400; // ms to hold on 1850
-  const TICK = 60; // how fast digits flicker
+  
+  const PRE_SCRAMBLE_HOLD = 500; 
+  const SCRAMBLE_DURATION = 1500; 
+  const HOLD_FINAL_DURATION = 1400; 
+  const TICK = 60; 
 
   const digits = "0123456789";
   const startTime = performance.now();
@@ -2001,13 +1968,13 @@ function playYearSequence(onComplete) {
   const scrambleInterval = setInterval(() => {
     const elapsed = performance.now() - startTime;
 
-    // Phase 1: hold on 2025
+    
     if (elapsed < PRE_SCRAMBLE_HOLD) {
       yearDisplay.textContent = "2025";
       return;
     }
 
-    // Phase 2: shuffling digits
+    
     if (elapsed < PRE_SCRAMBLE_HOLD + SCRAMBLE_DURATION) {
       let s = "";
       for (let i = 0; i < 4; i++) {
@@ -2017,15 +1984,15 @@ function playYearSequence(onComplete) {
       return;
     }
 
-    // Phase 3: lock to 1850 and fade out
+    
     clearInterval(scrambleInterval);
     yearDisplay.classList.remove("scrambling");
 
-    // Lock in the target year
+    
     yearDisplay.textContent = "1850";
     yearSubtitle.textContent = "The Dawn of the Carbon Age";
 
-    // Hold for a moment, then fade out overlay
+    
     setTimeout(() => {
       yearOverlay.classList.add("fade-out");
 
@@ -2033,15 +2000,13 @@ function playYearSequence(onComplete) {
         onComplete();
       }
 
-      // Remove classes after fade-out completes so we can reuse if needed
+      
       setTimeout(() => {
         yearOverlay.classList.remove("visible", "fade-out");
       }, 700);
     }, HOLD_FINAL_DURATION);
   }, TICK);
 }
-
-
 
 function clearWarpTimers() {
   if (warpTimeout) {
@@ -2059,17 +2024,17 @@ function clearWarpTimers() {
 }
 
 function resetStarfieldForIntro() {
-  // 1) Cancel any warp / fade timers
+  
   clearWarpTimers();
 
-  // 2) Reset story / warp flags
+  
   isInStory = false;
   isWarping = false;
   isStoryActive = false;
   hasStartedStory = false;
   hasWarped = false;
 
-  // 3) Reset warp / star params
+  
   warpFactor = WARP_IDLE;
   warpTarget = WARP_IDLE;
   starGlobalAlpha = 1;
@@ -2077,27 +2042,25 @@ function resetStarfieldForIntro() {
   warpHuePhase = 0;
   lastTime = 0;
 
-  // 4) Fresh starfield
+  
   initStars();
 
-  // 5) Restore intro UI + classes (THIS is what makes stars visible again)
-  document.body.classList.add("cinematic-mode");   // <- important
+  
+  document.body.classList.add("cinematic-mode");   
   document.body.classList.remove("story-intro-active");
 
   const introCardsEl = document.getElementById("intro-cards");
   if (introCardsEl) {
-    introCardsEl.style.display = ""; // show again
+    introCardsEl.style.display = ""; 
   }
 
   if (intro) intro.classList.remove("slide-up");
   if (scrolly) scrolly.classList.remove("visible");
 }
 
-
-
 function enterStory() {
   if (isInStory || isWarping) return;
-  // if (hasWarped) return;
+  
 
   isInStory = true;
   isWarping = true;
@@ -2114,7 +2077,7 @@ function enterStory() {
 
   intro.classList.add("slide-up");
 
-  // keep Earth hidden for warp + black + year gate
+  
   isEarthVisible = false;
   document.body.classList.add("cinematic-mode");
   draw();
@@ -2135,46 +2098,46 @@ function enterStory() {
 
   warpTarget = WARP_BURST;
 
-  // --- TIMING KNOBS ---
-  const WARP_DURATION = 1000; // initial burst
-  const DECEL_DURATION = 800; // delay before we start the glide
-  const GLIDE_BEFORE_FADE = 800; // stars still visible but slower
-  const STAR_FADE_DURATION = 700; // time stars take to fade to 0
-  const POST_FADE_DELAY = 200; // time sitting on black before year gate
+  
+  const WARP_DURATION = 1000; 
+  const DECEL_DURATION = 800; 
+  const GLIDE_BEFORE_FADE = 800; 
+  const STAR_FADE_DURATION = 700; 
+  const POST_FADE_DELAY = 200; 
   const ZOOM_DURATION = 700;
 
-  // 1) Burst warp phase
+  
   warpTimeout = setTimeout(() => {
     setTimeout(() => {
       isStoryActive = true;
     }, 200);
 
-    // 2) Decel phase begins
+    
     slowTimeout = setTimeout(() => {
-      // Glide: slower warp, stars still visible
-      warpTarget = 0.08; // small but non-zero so they still move
+      
+      warpTarget = 0.08; 
       starTargetAlpha = 0.9;
       dotAlpha = 0;
       isEarthVisible = false;
       draw();
 
-      // 3) After some glide time, start the fade phase
+      
       setTimeout(() => {
-        // start fading the stars to 0 alpha while still in "warp" mode
-        warpTarget = 0.02; // almost stopped
+        
+        warpTarget = 0.02; 
         starTargetAlpha = 0;
 
-        // give them time to visually fade out
+        
         setTimeout(() => {
-          // now stars should basically be gone → switch to pure black
-          isWarping = false; // renderSpace now just paints solid black
+          
+          isWarping = false; 
           isEarthVisible = false;
           draw();
 
-          // short pause on black, then run the year gate
+          
           setTimeout(() => {
             playYearSequence(() => {
-              // After 2025 → scramble → 1850 finishes, zoom Earth in
+              
               isZooming = true;
               isEarthVisible = true;
 
@@ -2217,30 +2180,30 @@ function enterStory() {
 function leaveStory() {
   if (isWarping) return;
 
-  // stop any warp timers
+  
   clearWarpTimers();
 
-  // story state
+  
   isInStory = false;
   isWarping = false;
   isStoryActive = false;
 
-  // put stars back into "intro" mode
-  warpTarget = WARP_IDLE;   // 0.25
+  
+  warpTarget = WARP_IDLE;   
   warpFactor = WARP_IDLE;
   starTargetAlpha = 1;
   starGlobalAlpha = 1;
   warpHuePhase = 0;
 
-  // UI state
+  
   hideIntroCards();
   scrolly.classList.remove("visible");
   intro.classList.remove("slide-up");
 
   document.body.classList.remove("cinematic-mode");
 
-  // We’re leaving the story → allow scrolling again here;
-  // the back button will re-lock if needed.
+  
+  
   unlockScroll();
 
   resizeCanvas();
@@ -2248,7 +2211,7 @@ function leaveStory() {
 }
 
 function playOutroWarpToConclusion(onComplete) {
-  // If we're already warping, just bail out and go straight to conclusion
+  
   if (isWarping) {
     if (onComplete) onComplete();
     return;
@@ -2257,57 +2220,57 @@ function playOutroWarpToConclusion(onComplete) {
   if (scrollyEl) {
     scrollyEl.style.display = "none";
   }
-  // Flag this as the outro warp so streak colors change
+  
   isOutroWarp = true;
 
-  // We are still "in the story" during this warp
+  
   isWarping = true;
   isStoryActive = false;
 
-  // Put us into cinematic mode so the timeline UI fades away
+  
   document.body.classList.add("cinematic-mode");
 
-  // Hide the Earth during the warp so it feels like pure hyperspace
+  
   isEarthVisible = false;
   draw();
 
-  // Make sure stars are ready
+  
   if (!starsInitialized) {
     initStars();
     starsInitialized = true;
   }
 
-  // Start from black / no stars → then ramp into warp streaks
+  
   warpFactor = 0.0;
-  warpTarget = WARP_BURST; // big streaks, same constant as intro warp
+  warpTarget = WARP_BURST; 
   starGlobalAlpha = 0.0;
-  starTargetAlpha = 1.0; // fade stars in during the warp
+  starTargetAlpha = 1.0; 
 
-  const OUTRO_BURST_DURATION = 900; // big-streak phase
-  const OUTRO_SETTLE_DURATION = 700; // glide into calm stars
+  const OUTRO_BURST_DURATION = 900; 
+  const OUTRO_SETTLE_DURATION = 700; 
 
-  // Phase 1: high warp streaks
+  
   setTimeout(() => {
-    // Phase 2: glide back down to the idle "hovering stars" state
-    warpTarget = WARP_IDLE; // ~0.25
-    starTargetAlpha = 1.0; // keep stars visible
+    
+    warpTarget = WARP_IDLE; 
+    starTargetAlpha = 1.0; 
 
     setTimeout(() => {
-      // Outro warp finished
+      
       isWarping = false;
       isInStory = false;
       isStoryActive = false;
 
       warpTarget = WARP_IDLE;
       starTargetAlpha = 1.0;
-      isOutroWarp = false; // <-- turn off special tint
+      isOutroWarp = false; 
 
       document.body.classList.remove("cinematic-mode");
 
-      // Hand off to conclusion screen logic
+      
       if (onComplete) onComplete();
 
-      // Gentle re-affirm of visible stars after layout settles
+      
       setTimeout(() => {
         starTargetAlpha = 1.0;
       }, 350);
@@ -2316,21 +2279,20 @@ function playOutroWarpToConclusion(onComplete) {
 }
 
 function cleanupStarsForTimeline() {
-  // We are going back into the STORY (timeline) state
+  
   isInStory = true;
   isStoryActive = true;
   isWarping = false;
 
-  // No warp motion, no visible stars
+  
   warpTarget = 0;
   warpFactor = 0;
   starTargetAlpha = 0;
   starGlobalAlpha = 0;
 
   isEarthVisible = true;
-  draw(); // one clean frame of dark, starless background
+  draw(); 
 }
-
 
 const beginBtn = document.getElementById("begin-btn");
 if (beginBtn) {
@@ -2363,12 +2325,12 @@ if (proceedBtn) {
         behavior: "smooth",
       });
 
-      // *** NEW: force-activate the first step so it always highlights ***
+      
       const firstStep = firstStepBlock.querySelector(".step");
       if (firstStep) {
-        // Small timeout so we’re roughly at the right scroll position
+        
         setTimeout(() => {
-          // Only run if we’re actually in the story and not warping
+          
           if (isInStory && !isWarping && !isZooming) {
             handleStepEnter(firstStep);
           }
@@ -2378,13 +2340,12 @@ if (proceedBtn) {
   });
 }
 
-
 const yearToggleEl = document.getElementById("year-toggle");
 const yearToggleButtons = yearToggleEl
   ? yearToggleEl.querySelectorAll(".year-toggle-option")
   : [];
 if (yearToggleEl) {
-  yearToggleEl.classList.remove("visible"); // make sure it starts hidden
+  yearToggleEl.classList.remove("visible"); 
 }
 
 function setYearMode(mode) {
@@ -2399,13 +2360,13 @@ function setYearMode(mode) {
     btn.classList.toggle("active", btnMode === currentYearMode);
   });
 
-  // Trigger glow pulse animation on the toggle container
+  
   yearToggleEl.classList.remove("glow-pulse");
-  // force reflow so animation can restart
+  
   void yearToggleEl.offsetWidth;
   yearToggleEl.classList.add("glow-pulse");
 
-  // Re-load globe for the current active step if any, with dot transition
+  
   if (currentStepElement) {
     const file = getGlobeFileForStep(currentStepElement);
     if (file) {
@@ -2413,7 +2374,6 @@ function setYearMode(mode) {
     }
   }
 }
-
 
 if (yearToggleButtons.length) {
   yearToggleButtons.forEach((btn) => {
@@ -2423,7 +2383,7 @@ if (yearToggleButtons.length) {
     });
   });
 }
-// === Conclusion Button (MUST wait until countries.json is loaded) ===
+
 const conclusionBtn = document.getElementById("conclusion-btn");
 const conclusionSection = document.getElementById("conclusion");
 
@@ -2431,7 +2391,7 @@ function setupConclusionButton() {
   if (!conclusionBtn || !conclusionSection) return;
 
   function showConclusionScreen() {
-    // 1) Hide the Event / +10 Years toggle in conclusion
+    
     if (yearToggleEl) {
       yearToggleEl.classList.remove("visible");
       currentYearMode = "event";
@@ -2440,22 +2400,22 @@ function setupConclusionButton() {
       });
     }
 
-    // 2) Reveal the conclusion section
+    
     conclusionSection.classList.remove("hidden-outro");
 
-    // Fade the card in instead of popping it
+    
     const outroCard = conclusionSection.querySelector(".outro-card");
     if (outroCard) {
-      // ensure we start from the "hidden" state
+      
       outroCard.classList.remove("is-visible");
-      // wait one frame so display:none → block has applied
+      
       requestAnimationFrame(() => {
         outroCard.classList.add("is-visible");
       });
     }
 
-    // IMPORTANT: now that countries is guaranteed loaded,
-    // the globe can safely initialize
+    
+    
     if (!conclusionInitialized) {
       requestAnimationFrame(() => {
         initConclusionGlobe();
@@ -2467,7 +2427,7 @@ function setupConclusionButton() {
       });
     }
 
-    // 3) Hide timeline and scroll to conclusion
+    
     const scrollyEl = document.getElementById("scrolly");
     if (scrollyEl) scrollyEl.style.display = "none";
     document.body.classList.remove("cinematic-mode");
@@ -2478,19 +2438,17 @@ function setupConclusionButton() {
     });
   }
 
-  // Use the reverse-warp outro before showing the conclusion
+  
   conclusionBtn.addEventListener("click", () => {
     playOutroWarpToConclusion(showConclusionScreen);
   });
 }
-
 
 if (!DEV_MODE) {
   lockScroll();
   window.scrollTo(0, 0);
 }
 
-// === Conclusion Globe (interactive) ===
 const conclusionCanvas = document.getElementById("globe-conclusion");
 let conclusionCtx = conclusionCanvas ? conclusionCanvas.getContext("2d") : null;
 let conclusionProjection, conclusionPath;
@@ -2501,7 +2459,6 @@ let conclusionColorScale = d3
   .range(["#020b1f", "#38bdf8", "#f97316"])
   .clamp(true);
 
-// All years from 1850–2014 (inclusive)
 const conclusionYears = d3.range(1850, 2015);
 
 let conclusionInitialized = false;
@@ -2512,10 +2469,10 @@ let rotationStart = null;
 function resizeConclusionGlobe() {
   if (!conclusionCanvas || !conclusionCtx || !countries) return;
   const rect = conclusionCanvas.getBoundingClientRect();
-  if (!rect.width || !rect.height) return; // invisible (hidden-outro)
+  if (!rect.width || !rect.height) return; 
 
   const dpr = window.devicePixelRatio || 1;
-  const size = Math.min(rect.width, rect.width); // square
+  const size = Math.min(rect.width, rect.width); 
 
   conclusionCanvas.width = size * dpr;
   conclusionCanvas.height = size * dpr;
@@ -2534,23 +2491,23 @@ function resizeConclusionGlobe() {
 }
 
 function applyConclusionData(rows) {
-  // 1) Map rows into the same structure used by updateYear()
+  
   let yearData = rows.map(d => {
     return {
       lat: +d.lat,
       lon: +d.lon,
       co2: +d.fco2antt,
-      weight: 1  // in conclusion there is no regional mask, matches timeline outside steps
+      weight: 1  
     };
   });
 
-  // 2) Filter like timeline: drop extremely low-weight / invalid
+  
   let scaleSample = yearData.filter(d => d.co2 > 0 && d.weight > 0.2);
   if (!scaleSample.length) {
     scaleSample = yearData.filter(d => d.co2 > 0);
   }
 
-  // 3) Same quantile domain used in timeline
+  
   const landValues = scaleSample.map(d => d.co2).sort(d3.ascending);
   if (landValues.length) {
     const q80 = d3.quantile(landValues, 0.8);
@@ -2558,7 +2515,7 @@ function applyConclusionData(rows) {
     conclusionColorScale.domain([0, q80, q95]);
   }
 
-  // 4) IDENTICAL binning to timeline globe
+  
   const BIN_SIZE = 1.5;
   const binned = d3.rollup(
     yearData,
@@ -2570,7 +2527,7 @@ function applyConclusionData(rows) {
     d => Math.round(d.lon / BIN_SIZE) * BIN_SIZE
   );
 
-  // 5) Build plotData exactly like timeline does (including jitter)
+  
   conclusionPlotData = [];
   binned.forEach((lons, lat) => {
     lons.forEach((val, lon) => {
@@ -2588,31 +2545,29 @@ function applyConclusionData(rows) {
   drawConclusionGlobe();
 }
 
-
-// Cache to avoid re-fetching 165 separate files
 let conclusionFileCache = {};
 
 function loadConclusionYear(year) {
   const file = `data/${year}_co.csv`;
 
-  // Update label immediately
+  
   const labelEl = document.getElementById("conclusion-year-label");
   if (labelEl) labelEl.textContent = year;
 
-  // 1. If Cached: Yield briefly, then draw
+  
   if (conclusionFileCache[file]) {
-    // setTimeout(..., 0) pushes the heavy math to the END of the event loop,
-    // guaranteeing the slider has physically moved on screen first.
+    
+    
     setTimeout(() => {
       applyConclusionData(conclusionFileCache[file]);
     }, 0);
     return;
   }
 
-  // 2. If Loading: Fetch, then draw
+  
   d3.csv(file)
     .then((rows) => {
-      // Normalize immediately
+      
       rows.forEach((d) => {
         d.lat = +d.lat;
         d.lon = +d.lon;
@@ -2620,14 +2575,14 @@ function loadConclusionYear(year) {
       });
       conclusionFileCache[file] = rows;
 
-      // Yield before applying
+      
       setTimeout(() => {
         applyConclusionData(rows);
       }, 0);
     })
     .catch((err) => {
       console.error("[conclusion] Failed to load", file, err);
-      // Even the empty draw should be yielded to keep rhythm
+      
       setTimeout(() => {
         applyConclusionData([]);
       }, 0);
@@ -2645,17 +2600,15 @@ const cx = t[0];
 const cy = t[1];
 let r = conclusionProjection.scale() - 3;
 
-// avoid negative radius if something funky happens with sizing
 if (r <= 0) return;
 
-// ocean
 conclusionCtx.beginPath();
 conclusionCtx.arc(cx, cy, r, 0, Math.PI * 2);
 
   conclusionCtx.fillStyle = OCEAN_COLOR;
   conclusionCtx.fill();
 
-  // atmosphere glow
+  
   const glowGrad = conclusionCtx.createRadialGradient(
     cx,
     cy,
@@ -2672,7 +2625,7 @@ conclusionCtx.arc(cx, cy, r, 0, Math.PI * 2);
   conclusionCtx.fillStyle = glowGrad;
   conclusionCtx.fill();
 
-  // dots
+  
   const domain = conclusionColorScale.domain();
   const maxVal = domain[domain.length - 1] || 1;
 
@@ -2698,7 +2651,7 @@ conclusionCtx.arc(cx, cy, r, 0, Math.PI * 2);
 
   conclusionCtx.globalAlpha = 1;
 
-  // graticule + land
+  
   conclusionCtx.beginPath();
   conclusionCtx.strokeStyle = "rgba(148, 163, 184, 0.25)";
   conclusionCtx.lineWidth = 0.4;
@@ -2727,7 +2680,7 @@ function initConclusionGlobe() {
     slider.max = conclusionYears.length - 1;
     slider.value = String(conclusionYears.indexOf(defaultYear));
 
-    // --- NEW SMOOTH SLIDER LOGIC ---
+    
     let isGlobeUpdateScheduled = false;
 
     let throttleTimer = null;
@@ -2737,30 +2690,30 @@ function initConclusionGlobe() {
       const idx = +slider.value;
       const year = conclusionYears[idx];
 
-      // 1. Update Text Immediately (Cheap)
+      
       const labelEl = document.getElementById("conclusion-year-label");
       if (labelEl) labelEl.textContent = year;
 
-      // 2. Throttle the Heavy Math (Expensive)
+      
       const now = Date.now();
 
-      // If we haven't drawn in 80ms, draw immediately (updates WHILE dragging)
+      
       if (now - lastRenderTime > 80) {
         loadConclusionYear(year);
         lastRenderTime = now;
       }
 
-      // ALWAYS schedule a "trailing" update.
-      // This guarantees that when you STOP dragging, the final year is drawn.
+      
+      
       clearTimeout(throttleTimer);
       throttleTimer = setTimeout(() => {
         loadConclusionYear(year);
         lastRenderTime = Date.now();
       }, 80);
     });
-    // --------------------------------
+    
 
-    // Pause starfield while interacting
+    
     const pauseStars = () => {
       starsPaused = true;
     };
@@ -2773,7 +2726,7 @@ function initConclusionGlobe() {
     slider.addEventListener("pointercancel", resumeStars);
     slider.addEventListener("pointerleave", resumeStars);
 
-    // Initial load
+    
     loadConclusionYear(defaultYear);
   }
   conclusionCanvas.addEventListener("mousedown", (e) => {
@@ -2805,7 +2758,7 @@ function initConclusionGlobe() {
 }
 
 if (canvas) {
-  // Mouse
+  
   canvas.addEventListener("mousedown", (e) => {
     beginMainGlobeDrag(e.clientX, e.clientY);
   });
@@ -2819,7 +2772,7 @@ if (canvas) {
     endMainGlobeDrag();
   });
 
-  // Touch
+  
   canvas.addEventListener(
     "touchstart",
     (e) => {
@@ -2836,7 +2789,7 @@ if (canvas) {
       if (!mainGlobeDragging) return;
       if (!e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      // prevent the page from scrolling while rotating the globe
+      
       e.preventDefault();
       moveMainGlobeDrag(t.clientX, t.clientY);
     },
@@ -2852,17 +2805,16 @@ if (canvas) {
   });
 }
 
-// Allow dragging the globe even when the intro overlay (#intro-cards) is on top
 if (introCards && canvas) {
-  // Mouse: start drag when clicking in the empty space over the globe
+  
   introCards.addEventListener("mousedown", (e) => {
-    // Don't hijack clicks on the cards or buttons
+    
     if (e.target.closest(".intro-card") || e.target.closest("button")) return;
 
     beginMainGlobeDrag(e.clientX, e.clientY);
   });
 
-  // Touch: same idea for mobile
+  
   introCards.addEventListener(
     "touchstart",
     (e) => {
@@ -2875,11 +2827,10 @@ if (introCards && canvas) {
   );
 }
 
-
 const backToIntroBtn = document.getElementById("back-to-intro-btn");
 if (backToIntroBtn) {
   backToIntroBtn.addEventListener("click", () => {
-    // Collapse race panel + hide proceed
+    
     document.body.classList.remove("race-expanded", "race-lift");
 
     const proceedBtnEl = document.getElementById("proceed-btn");
@@ -2887,13 +2838,13 @@ if (backToIntroBtn) {
       proceedBtnEl.classList.remove("visible");
     }
 
-    // Leave story (globe + UI)
+    
     leaveStory();
 
-    // Hard reset starfield + story state to intro
+    
     resetStarfieldForIntro();
 
-    // Put user back at top, and lock scroll like initial load
+    
     lockScroll();
     window.scrollTo({
       top: 0,
@@ -2901,30 +2852,29 @@ if (backToIntroBtn) {
     });
 
     if (typeof resizeGlobe === "function") {
-      resizeGlobe(); // or updateProjectionScale(); whichever your code uses
-      draw(); // force a repaint so spacing fixes instantly
+      resizeGlobe(); 
+      draw(); 
     }
   });
 }
 
-
 const backToRaceBtn = document.getElementById("back-to-race-btn");
 if (backToRaceBtn) {
   backToRaceBtn.addEventListener("click", () => {
-    // Only do this if we’re already in the story and not mid-warp/zoom
+    
     if (!isInStory || isWarping || isZooming) return;
 
-    // 1) Lock scroll while the race overlay is up
+    
     lockScroll();
 
-    // 2) Clear any “step” / zoom state from the timeline
+    
     currentStepElement = null;
     focusLon = null;
     focusLat = null;
     activeRegionLabel = "";
     currentStepZoomMultiplier = 1;
 
-    // 3) Reset year toggle back to event mode and hide it
+    
     if (yearToggleEl) {
       currentYearMode = "event";
       yearToggleEl.classList.remove("visible");
@@ -2933,28 +2883,28 @@ if (backToRaceBtn) {
       });
     }
 
-    // 4) Show intro cards / race again
+    
     showIntroCards();
 
-    // 5) Wait a frame for layout, then reset the globe + scroll
+    
     requestAnimationFrame(() => {
-      // Recompute canvas + panel size
+      
       resizeCanvas();
 
-      // Reset rotation to default intro view
+      
       if (projection) {
         projection.rotate([0, 0, 0]);
-        // Intro scene scale
+        
         projection.scale(targetScale * 0.9);
       }
 
-      // Load original intro data (1850)
+      
       updateYear("data/1850_co.csv");
 
-      // Redraw globe
+      
       draw();
 
-      // Scroll so the race/intro area is in view
+      
       const scrollyTop = scrolly ? scrolly.offsetTop : 0;
       window.scrollTo({
         top: scrollyTop,
@@ -2964,23 +2914,22 @@ if (backToRaceBtn) {
   });
 }
 
-
 const backToTimelineBtn = document.getElementById("back-to-timeline-btn");
 if (backToTimelineBtn && conclusionSection) {
   backToTimelineBtn.addEventListener("click", () => {
-    // Put starfield & state back into story / timeline mode
+    
     cleanupStarsForTimeline();
 
-    // 1) Hide the conclusion section again
+    
     conclusionSection.classList.add("hidden-outro");
 
-    // 2) Show the scrolly timeline section
+    
     const scrollyEl = document.getElementById("scrolly");
     if (scrollyEl) {
-      scrollyEl.style.display = ""; // revert to CSS (flex)
+      scrollyEl.style.display = ""; 
     }
 
-    // 3) Scroll to the current active newspaper page (or first one)
+    
     let targetBlock = document.querySelector(
       ".step-block.newspaper-page.is-active"
     );
@@ -2998,7 +2947,7 @@ if (backToTimelineBtn && conclusionSection) {
         behavior: "auto",
       });
 
-      // Re-activate the step so the globe + toggle state are correct
+      
       const stepEl = targetBlock.querySelector(".step");
       if (stepEl && !isWarping && !isZooming) {
         handleStepEnter(stepEl);
